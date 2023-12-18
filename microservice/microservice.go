@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	model "demo-temporal/model"
 
@@ -35,6 +36,7 @@ func register(c *gin.Context) {
 
 	db = append(db, newAccount)
 	c.IndentedJSON(http.StatusCreated, newAccount)
+	time.Sleep(time.Second * 5)
 }
 
 func getAccounts(c *gin.Context) {
@@ -64,8 +66,7 @@ func registerSms(c *gin.Context) {
 			} else {
 				a.IsSms = true
 				db[i] = a
-				c.IndentedJSON(http.StatusOK, gin.H{"message": fmt.Sprintf("register Sms for cif=%s successfully", id),
-					"account": db[i]})
+				c.IndentedJSON(http.StatusOK, db[i])
 			}
 
 			return

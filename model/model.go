@@ -7,13 +7,7 @@ type Account struct {
 	IsEmail bool    `json:"isEmail"`
 }
 
-type PaymentDetail struct {
-	Id              string  `json:"id"`
-	SourceAccountId string  `json:"sourceAccount"`
-	TargetAccountId string  `json:"targetAccount"`
-	Amount          float64 `json:"amount"`
-}
-
-type saferResponse struct {
-	Response string `json:"response"`
+type ParallelWorkflowInput struct {
+	Cif1 string
+	Cif2 string
 }

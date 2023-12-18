@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"demo-temporal/model"
 	"demo-temporal/shared"
 	workflow "demo-temporal/workflow"
 
@@ -28,14 +29,23 @@ func main() {
 	}
 
 	if os.Args[1] == "parallel" {
-		// we, err := c.ExecuteWorkflow(context.Background(), options, workflow.ParallelWorkFlow, os.Args[2])
-	} else {
-		account, err := c.ExecuteWorkflow(context.Background(), options, workflow.AsyncWorkFlow)
-		if err != nil {
-			log.Fatalln("Unable to execute workflow", err)
+		input := model.ParallelWorkflowInput{
+			Cif1: "1",
+			Cif2: "2",
 		}
 
-		log.Println("Workflow completed", "ID", account)
+		_, err := c.ExecuteWorkflow(context.Background(), options, workflow.ParallelWorkFlow, input)
+		if err != nil {
+			log.Fatalln("Unable to execute parallel workflow", err)
+		}
+
+	} else if os.Args[1] == "async" {
+		_, err := c.ExecuteWorkflow(context.Background(), options, workflow.AsyncWorkFlow)
+		if err != nil {
+			log.Fatalln("Unable to execute async workflow", err)
+		}
+	} else {
+		log.Fatal("Invalid Argument")
 	}
 
 }

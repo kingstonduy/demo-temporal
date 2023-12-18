@@ -24,6 +24,7 @@ func main() {
 
 	w.RegisterActivity(activity.RegisterAccount)
 	w.RegisterActivity(activity.RegisterSms)
+	w.RegisterActivity(activity.NotificationSms)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {

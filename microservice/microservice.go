@@ -19,9 +19,9 @@ var errorLogger *log.Logger = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|
 var cnt int = 4
 
 var db = []model.Account{
-	{Cif: "1", Balance: 1000, IsSms: true, IsEmail: true},
-	{Cif: "2", Balance: 2000, IsSms: true, IsEmail: true},
-	{Cif: "3", Balance: 3000, IsSms: true, IsEmail: true},
+	{Cif: "1", Balance: 1000, IsSms: false, IsEmail: false},
+	{Cif: "2", Balance: 2000, IsSms: false, IsEmail: false},
+	{Cif: "3", Balance: 3000, IsSms: false, IsEmail: false},
 }
 
 func register(c *gin.Context) {
@@ -41,9 +41,11 @@ func register(c *gin.Context) {
 
 func getAccounts(c *gin.Context) {
 	c.JSON(http.StatusOK, db)
+	time.Sleep(time.Second * 5)
 }
 
 func getAccountById(c *gin.Context) {
+	time.Sleep(time.Second * 5)
 	id := c.Param("id")
 
 	for _, a := range db {
@@ -53,22 +55,18 @@ func getAccountById(c *gin.Context) {
 		}
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "account not found"})
+
 }
 
 func registerSms(c *gin.Context) {
+	time.Sleep(time.Second * 5)
 	id := c.Param("id")
 
 	for i, a := range db {
 		if a.Cif == id {
-			if a.IsSms == true {
-				c.IndentedJSON(http.StatusConflict, gin.H{"message": "Sms already registered"})
-				return
-			} else {
-				a.IsSms = true
-				db[i] = a
-				c.IndentedJSON(http.StatusOK, db[i])
-			}
-
+			a.IsSms = true
+			db[i] = a
+			c.IndentedJSON(http.StatusOK, db[i])
 			return
 		}
 	}
@@ -76,6 +74,7 @@ func registerSms(c *gin.Context) {
 }
 
 func registerEmail(c *gin.Context) {
+	time.Sleep(time.Second * 5)
 	id := c.Param("id")
 
 	for i, a := range db {
@@ -96,6 +95,7 @@ func registerEmail(c *gin.Context) {
 }
 
 func withdraw(c *gin.Context) {
+	time.Sleep(time.Second * 5)
 	id := c.Param("id")
 	amount, err := strconv.ParseFloat(c.Param("amount"), 64)
 	if err != nil {
@@ -121,6 +121,7 @@ func withdraw(c *gin.Context) {
 }
 
 func deposit(c *gin.Context) {
+	time.Sleep(time.Second * 5)
 	id := c.Param("id")
 	amount, err := strconv.ParseFloat(c.Param("amount"), 64)
 	if err != nil {
@@ -137,6 +138,20 @@ func deposit(c *gin.Context) {
 		}
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "account not found"})
+
+}
+
+func getBalanceById(c *gin.Context) {
+	time.Sleep(time.Second * 10)
+	id := c.Param("id")
+
+	for _, a := range db {
+		if a.Cif == id {
+			c.IndentedJSON(http.StatusOK, a.Balance)
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "account not found"})
 }
 
 func main() {
@@ -144,6 +159,7 @@ func main() {
 	router.POST("/account/register", register)
 	router.GET("/account/:id", getAccountById)
 	router.GET("/account/all", getAccounts)
+	router.GET("/account/balance/:id", getBalanceById)
 	router.POST("/account/register/sms/:id", registerSms)
 	router.POST("/account/register/email/:id", registerEmail)
 	router.POST("/withdraw/:id/:amount", withdraw)

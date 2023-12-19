@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -16,18 +17,18 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 	// register sms existing account
 	// check balance existing account
 	options := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Minute * 5,
+		StartToCloseTimeout: time.Second * 15,
+		HeartbeatTimeout:    time.Second * 15,
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
-
-	futureA := workflow.ExecuteActivity(ctx, activity.RegisterAccount, nil)
 
 	accountB := model.Account{
 		Cif: input.Cif1,
 	}
 
+	futureA := workflow.ExecuteActivity(ctx, activity.RegisterAccount, nil)
 	futureB := workflow.ExecuteActivity(ctx, activity.RegisterSms, accountB)
-	// futureC := workflow.ExecuteActivity(ctx, activity.RegisterAccount, nil)
+	futureC := workflow.ExecuteActivity(ctx, activity.GetBalanceById, input.Cif2)
 
 	var resultA model.Account
 	errA := futureA.Get(ctx, &resultA)
@@ -43,6 +44,17 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 		return errA
 	}
 
+	var resultC float64
+	errC := futureC.Get(ctx, &resultC)
+	if errC != nil {
+		log.Fatal("Get balance by id failed, err=", errC)
+		return errC
+	}
+
+	fmt.Println("💡Register new account, account=", resultA)
+	fmt.Println("💡Register sms for account id=", input.Cif1, "account=", resultB)
+	fmt.Println("💡Get balance for account id=", input.Cif2, "balance=", resultC)
+
 	return nil
 }
 
@@ -51,7 +63,8 @@ func AsyncWorkFlow(ctx workflow.Context) error {
 	// register sms
 	// send notification to sms
 	options := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Minute * 5,
+		StartToCloseTimeout: time.Second * 15,
+		HeartbeatTimeout:    time.Second * 15,
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
 
@@ -61,21 +74,17 @@ func AsyncWorkFlow(ctx workflow.Context) error {
 		log.Fatal("Register account failed, err=", err)
 		return err
 	}
-	log.Println("Register account completely, Account=", account)
+	log.Println("💡Register account successfully, Account=", account)
 
-	err = workflow.ExecuteActivity(ctx, activity.RegisterSms, &account).Get(ctx, &account)
-	if err != nil {
-		log.Fatal("Register sms failed, err=", err)
-		return err
-	}
-	log.Println("Register sms completely, Account=", account)
+	_ = workflow.ExecuteActivity(ctx, activity.RegisterSms, &account).Get(ctx, &account)
+	log.Println("💡Register sms successfully, Account=", account)
 
 	err = workflow.ExecuteActivity(ctx, activity.NotificationSms, &account).Get(ctx, &account)
 	if err != nil {
 		log.Fatal("Failed to send notification, err=", err)
 		return err
 	}
-	log.Println("Send notification successfully", account)
+	log.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
 
 	return nil
 }

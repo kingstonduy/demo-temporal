@@ -46,7 +46,7 @@ func GetBalanceById(ctx context.Context, id string) (float64, error) {
 	}
 
 	var output float64
-	log.Debug("content: ", content)
+	// log.Debug("content: ", content)
 	err = json.Unmarshal([]byte(content), &output)
 	if err != nil {
 		return 0, err
@@ -78,6 +78,15 @@ func RegisterSms(ctx context.Context, account *model.Account) (model.Account, er
 	return output, nil
 }
 
+func NotificationSms(ctx context.Context, account *model.Account) error {
+	if account.IsSms == true {
+		fmt.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
+		return nil
+	} else {
+		return errors.New("Fail to send notification")
+	}
+}
+
 func RegisterEmail(ctx context.Context, account *model.Account) (model.Account, error) {
 	log := activity.GetLogger(ctx)
 	log.Info("RegisterAccount activity started")
@@ -97,13 +106,4 @@ func RegisterEmail(ctx context.Context, account *model.Account) (model.Account, 
 	}
 
 	return output, nil
-}
-
-func NotificationSms(ctx context.Context, account *model.Account) error {
-	if account.IsSms == true {
-		fmt.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
-		return nil
-	} else {
-		return errors.New("Fail to send notification")
-	}
 }

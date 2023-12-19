@@ -30,6 +30,28 @@ func RegisterAccount(ctx context.Context) (model.Account, error) {
 		return model.Account{}, err
 	}
 
+	// fmt.Println("💡Register account successfully, Account=", output)
+	return output, nil
+}
+
+func GetBalanceById(ctx context.Context, id string) (float64, error) {
+	log := activity.GetLogger(ctx)
+	log.Info("GetBalanceById activity started")
+
+	url := fmt.Sprintf("http://localhost:8080/account/balance/%s", id)
+
+	content, err := utils.ReceiveFromApi(url, "GET")
+	if err != nil {
+		return 0, err
+	}
+
+	var output float64
+	log.Debug("content: ", content)
+	err = json.Unmarshal([]byte(content), &output)
+	if err != nil {
+		return 0, err
+	}
+
 	return output, nil
 }
 
@@ -51,6 +73,7 @@ func RegisterSms(ctx context.Context, account *model.Account) (model.Account, er
 		return model.Account{}, err
 	}
 
+	// fmt.Println("💡Register sms successfully, Account=", output)
 	return output, nil
 }
 
@@ -77,7 +100,7 @@ func RegisterEmail(ctx context.Context, account *model.Account) (model.Account, 
 
 func NotificationSms(ctx context.Context, account *model.Account) error {
 	if account.IsSms == true {
-		fmt.Println("🎇You have register SMS notification successfully!")
+		// fmt.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
 		return nil
 	} else {
 		return errors.New("Register SMS failed")

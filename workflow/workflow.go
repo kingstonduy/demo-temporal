@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -51,10 +50,6 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 		return errC
 	}
 
-	fmt.Println("💡Register new account, account=", resultA)
-	fmt.Println("💡Register sms for account id=", input.Cif1, "account=", resultB)
-	fmt.Println("💡Get balance for account id=", input.Cif2, "balance=", resultC)
-
 	return nil
 }
 
@@ -71,20 +66,15 @@ func AsyncWorkFlow(ctx workflow.Context) error {
 	var account model.Account
 	err := workflow.ExecuteActivity(ctx, activity.RegisterAccount, nil).Get(ctx, &account)
 	if err != nil {
-		log.Fatal("Register account failed, err=", err)
 		return err
 	}
-	log.Println("💡Register account successfully, Account=", account)
 
 	_ = workflow.ExecuteActivity(ctx, activity.RegisterSms, &account).Get(ctx, &account)
-	log.Println("💡Register sms successfully, Account=", account)
 
 	err = workflow.ExecuteActivity(ctx, activity.NotificationSms, &account).Get(ctx, &account)
 	if err != nil {
-		log.Fatal("Failed to send notification, err=", err)
 		return err
 	}
-	log.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
 
 	return nil
 }

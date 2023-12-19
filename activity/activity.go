@@ -30,7 +30,7 @@ func RegisterAccount(ctx context.Context) (model.Account, error) {
 		return model.Account{}, err
 	}
 
-	// fmt.Println("💡Register account successfully, Account=", output)
+	fmt.Println("💡Register account successfully, Account=", output)
 	return output, nil
 }
 
@@ -52,6 +52,7 @@ func GetBalanceById(ctx context.Context, id string) (float64, error) {
 		return 0, err
 	}
 
+	fmt.Println("💡The balance of account id ", id, "=", output)
 	return output, nil
 }
 
@@ -73,7 +74,7 @@ func RegisterSms(ctx context.Context, account *model.Account) (model.Account, er
 		return model.Account{}, err
 	}
 
-	// fmt.Println("💡Register sms successfully, Account=", output)
+	fmt.Println("💡Register sms successfully, Account=", output)
 	return output, nil
 }
 
@@ -100,9 +101,9 @@ func RegisterEmail(ctx context.Context, account *model.Account) (model.Account, 
 
 func NotificationSms(ctx context.Context, account *model.Account) error {
 	if account.IsSms == true {
-		// fmt.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
+		fmt.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
 		return nil
 	} else {
-		return errors.New("Register SMS failed")
+		return errors.New("Fail to send notification")
 	}
 }

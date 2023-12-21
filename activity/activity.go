@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	utils "demo-temporal"
 	model "demo-temporal/model"
@@ -79,6 +80,7 @@ func RegisterSms(ctx context.Context, account *model.Account) (model.Account, er
 }
 
 func NotificationSms(ctx context.Context, account *model.Account) error {
+	time.NewTimer(time.Second * 5)
 	if account.IsSms == true {
 		fmt.Println("💡🎇The Account id=", account.Cif, "have register SMS notification successfully!")
 		return nil

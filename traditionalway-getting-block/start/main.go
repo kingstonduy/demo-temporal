@@ -1,0 +1,32 @@
+package main
+
+import (
+	"context"
+	"demo-temporal/shared"
+	"demo-temporal/workflow"
+	"log"
+
+	"go.temporal.io/sdk/client"
+)
+
+type Person struct {
+	Name string
+}
+
+func main() {
+	c, err := client.Dial(client.Options{})
+	if err != nil {
+		log.Fatalln("Unable to create client", err)
+	}
+	defer c.Close()
+
+	option1 := client.StartWorkflowOptions{
+		ID:        "temporal-demo-workflow-tranditionalway-getting-block",
+		TaskQueue: shared.TaskQueueName,
+	}
+
+	_, err = c.ExecuteWorkflow(context.Background(), option1, workflow.AsyncWorkFlow1)
+	if err != nil {
+		log.Fatalln("Unable to execute async workflow", err)
+	}
+}

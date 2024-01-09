@@ -24,8 +24,11 @@ func main() {
 
 	wg := sync.WaitGroup{}
 
+	// tao worker 1 id = 1.0, thuc hien workflow1
 	createAndRunWorker(c, taskQueue, "1.0", w.SimpleWorkflowV1, &wg)
+	// tao worker 1 id = 2.0, thuc hien workflow2
 	createAndRunWorker(c, taskQueue, "2.0", w.SimpleWorkflowV2, &wg)
+	// tao worker 1 id = 3.0, thuc hien workflow3
 	createAndRunWorker(c, taskQueue, "3.0", w.SimpleWorkflowV3, &wg)
 	wg.Wait()
 }

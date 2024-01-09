@@ -6,6 +6,7 @@ import (
 	"demo-temporal/workflow"
 	"log"
 
+	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
 )
 
@@ -21,7 +22,7 @@ func main() {
 	defer c.Close()
 
 	option1 := client.StartWorkflowOptions{
-		ID:        "temporal-demo-workflow-tranditionalway-getting-block",
+		ID:        "temporal-demo-workflow-tranditionalway-getting-block_" + uuid.New(),
 		TaskQueue: shared.TaskQueueName,
 	}
 

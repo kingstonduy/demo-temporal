@@ -22,15 +22,15 @@ func main() {
 	}
 	defer c.Close()
 
-	// option1 := client.StartWorkflowOptions{
-	// 	ID:        "temporal-demo-simple-workflow_ " + uuid.New(),
-	// 	TaskQueue: shared.TaskQueueName,
-	// }
-	// _, _ = c.ExecuteWorkflow(context.Background(), option1, workflow.SimpleWorkflow)
-
-	option2 := client.StartWorkflowOptions{
-		ID:        "temporal-demo-simple-workflowv2_" + uuid.New(),
+	option1 := client.StartWorkflowOptions{
+		ID:        "temporal-demo-versioning-workflowtype_ " + uuid.New(),
 		TaskQueue: shared.TaskQueueName,
 	}
-	_, _ = c.ExecuteWorkflow(context.Background(), option2, workflow.SimpleWorkflow1)
+	_, _ = c.ExecuteWorkflow(context.Background(), option1, workflow.SimpleWorkflow)
+
+	// option2 := client.StartWorkflowOptions{
+	// 	ID:        "temporal-demo-simple-workflowv2_" + uuid.New(),
+	// 	TaskQueue: shared.TaskQueueName,
+	// }
+	// _, _ = c.ExecuteWorkflow(context.Background(), option2, workflow.SimpleWorkflow1)
 }

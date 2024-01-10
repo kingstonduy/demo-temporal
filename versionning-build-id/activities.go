@@ -1,9 +1,10 @@
-package activity
+package versionning_build_id
 
 import (
 	"context"
-	"demo-temporal/services"
 	"fmt"
+
+	"kingstonduy/demo-temporal/versionning-build-id/services"
 )
 
 func GetInformation(ctx context.Context) (string, error) {

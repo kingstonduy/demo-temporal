@@ -1,11 +1,11 @@
 package main
 
 import (
-	"demo-temporal/activity"
-	"demo-temporal/shared"
-	w "demo-temporal/workflow"
 	"log"
 	"sync"
+
+	versionning_build_id "kingstonduy/demo-temporal/versionning-build-id"
+	"kingstonduy/demo-temporal/versionning-build-id/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -25,11 +25,11 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	// tao worker 1 id = 1.0, thuc hien workflow1
-	createAndRunWorker(c, taskQueue, "1.0", w.SimpleWorkflowV1, &wg)
+	createAndRunWorker(c, taskQueue, "1.0", versionning_build_id.SimpleWorkflowV1, &wg)
 	// tao worker 1 id = 2.0, thuc hien workflow2
-	createAndRunWorker(c, taskQueue, "2.0", w.SimpleWorkflowV2, &wg)
+	createAndRunWorker(c, taskQueue, "2.0", versionning_build_id.SimpleWorkflowV2, &wg)
 	// tao worker 1 id = 3.0, thuc hien workflow3
-	createAndRunWorker(c, taskQueue, "3.0", w.SimpleWorkflowV3, &wg)
+	createAndRunWorker(c, taskQueue, "3.0", versionning_build_id.SimpleWorkflowV3, &wg)
 	wg.Wait()
 }
 
@@ -45,9 +45,9 @@ func createAndRunWorker(c client.Client, taskQueue string, buildID string, workf
 	// to this workflow code over time while keeping the same workflow name/type.
 	w.RegisterWorkflowWithOptions(workflowFunc, workflow.RegisterOptions{Name: shared.WorkflowName})
 
-	w.RegisterActivity(activity.GetInformation)
-	w.RegisterActivity(activity.GetInformation1)
-	w.RegisterActivity(activity.GetInformation2)
+	w.RegisterActivity(versionning_build_id.GetInformation)
+	w.RegisterActivity(versionning_build_id.GetInformation1)
+	w.RegisterActivity(versionning_build_id.GetInformation2)
 
 	// run the worker
 	wg.Add(1)

@@ -1,7 +1,6 @@
-package workflow
+package versionning_build_id
 
 import (
-	"demo-temporal/activity"
 	"fmt"
 	"time"
 
@@ -17,7 +16,7 @@ func SimpleWorkflowV1(ctx workflow.Context) error {
 
 	ctx = workflow.WithActivityOptions(ctx, options)
 
-	err := workflow.ExecuteActivity(ctx, activity.GetInformation).Get(ctx, nil)
+	err := workflow.ExecuteActivity(ctx, GetInformation).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -33,7 +32,7 @@ func SimpleWorkflowV2(ctx workflow.Context) error {
 
 	ctx = workflow.WithActivityOptions(ctx, options)
 
-	err := workflow.ExecuteActivity(ctx, activity.GetInformation1).Get(ctx, nil)
+	err := workflow.ExecuteActivity(ctx, GetInformation1).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -49,7 +48,7 @@ func SimpleWorkflowV3(ctx workflow.Context) error {
 
 	ctx = workflow.WithActivityOptions(ctx, options)
 
-	err := workflow.ExecuteActivity(ctx, activity.GetInformation2).Get(ctx, nil)
+	err := workflow.ExecuteActivity(ctx, GetInformation2).Get(ctx, nil)
 	if err != nil {
 		return err
 	}

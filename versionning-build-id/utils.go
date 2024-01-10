@@ -1,4 +1,4 @@
-package utils
+package versionning_build_id
 
 import (
 	"bytes"

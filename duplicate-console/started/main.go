@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"demo-temporal/model"
-	"demo-temporal/shared"
-	workflow "demo-temporal/workflow"
+	duplicate_console "kingstonduy/demo-temporal/duplicate-console"
+	"kingstonduy/demo-temporal/duplicate-console/model"
+	"kingstonduy/demo-temporal/duplicate-console/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
@@ -42,7 +42,7 @@ func main() {
 			Cif2: "2",
 		}
 
-		_, err := c.ExecuteWorkflow(context.Background(), optionsParallel, workflow.ParallelWorkFlow, input)
+		_, err := c.ExecuteWorkflow(context.Background(), optionsParallel, duplicate_console.ParallelWorkFlow, input)
 		if err != nil {
 			log.Fatalln("Unable to execute parallel workflow", err)
 		}
@@ -50,7 +50,7 @@ func main() {
 		break
 
 	case "async":
-		_, err := c.ExecuteWorkflow(context.Background(), optionsAsync, workflow.AsyncWorkFlow)
+		_, err := c.ExecuteWorkflow(context.Background(), optionsAsync, duplicate_console.AsyncWorkFlow)
 		if err != nil {
 			log.Fatalln("Unable to execute async workflow", err)
 		}
@@ -63,12 +63,12 @@ func main() {
 			Cif2: "2",
 		}
 
-		_, err := c.ExecuteWorkflow(context.Background(), optionsAsync, workflow.AsyncWorkFlow)
+		_, err := c.ExecuteWorkflow(context.Background(), optionsAsync, duplicate_console.AsyncWorkFlow)
 		if err != nil {
 			log.Fatalln("Unable to execute async workflow", err)
 		}
 
-		_, err = c.ExecuteWorkflow(context.Background(), optionsParallel, workflow.ParallelWorkFlow, input)
+		_, err = c.ExecuteWorkflow(context.Background(), optionsParallel, duplicate_console.ParallelWorkFlow, input)
 		if err != nil {
 			log.Fatalln("Unable to execute parallel workflow", err)
 		}

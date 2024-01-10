@@ -1,4 +1,4 @@
-package activity
+package duplicate_console
 
 import (
 	"context"
@@ -6,8 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	utils "demo-temporal"
-	model "demo-temporal/model"
+	model "kingstonduy/demo-temporal/duplicate-console/model"
 
 	"go.temporal.io/sdk/activity"
 )
@@ -18,7 +17,7 @@ func RegisterAccount(ctx context.Context) (model.Account, error) {
 
 	url := "http://localhost:8080/account/register"
 
-	content, err := utils.ReceiveFromApi(url, "POST")
+	content, err := ReceiveFromApi(url, "POST")
 	if err != nil {
 		return model.Account{}, err
 	}
@@ -40,7 +39,7 @@ func GetBalanceById(ctx context.Context, id string) (float64, error) {
 
 	url := fmt.Sprintf("http://localhost:8080/account/balance/%s", id)
 
-	content, err := utils.ReceiveFromApi(url, "GET")
+	content, err := ReceiveFromApi(url, "GET")
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +61,7 @@ func RegisterSms(ctx context.Context, account *model.Account) (model.Account, er
 	id := account.Cif
 	url := fmt.Sprintf("http://localhost:8080/account/register/sms/%s/", id)
 
-	content, err := utils.ReceiveFromApi(url, "POST")
+	content, err := ReceiveFromApi(url, "POST")
 	if err != nil {
 		return model.Account{}, err
 	}
@@ -84,7 +83,7 @@ func RegisterEmail(ctx context.Context, account *model.Account) (model.Account, 
 	id := account.Cif
 	url := fmt.Sprintf("http://localhost:8080/account/register/email/%s/", id)
 
-	content, err := utils.ReceiveFromApi(url, "POST")
+	content, err := ReceiveFromApi(url, "POST")
 	if err != nil {
 		return model.Account{}, err
 	}

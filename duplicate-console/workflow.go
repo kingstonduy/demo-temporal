@@ -1,12 +1,11 @@
-package workflow
+package duplicate_console
 
 import (
 	"fmt"
 	"log"
 	"time"
 
-	activity "demo-temporal/activity"
-	model "demo-temporal/model"
+	model "kingstonduy/demo-temporal/duplicate-console/model"
 
 	"go.temporal.io/sdk/workflow"
 )
@@ -26,9 +25,9 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 		Cif: input.Cif1,
 	}
 
-	futureA := workflow.ExecuteActivity(ctx, activity.RegisterAccount, nil)
-	futureB := workflow.ExecuteActivity(ctx, activity.RegisterSms, accountB)
-	futureC := workflow.ExecuteActivity(ctx, activity.GetBalanceById, input.Cif2)
+	futureA := workflow.ExecuteActivity(ctx, RegisterAccount, nil)
+	futureB := workflow.ExecuteActivity(ctx, RegisterSms, accountB)
+	futureC := workflow.ExecuteActivity(ctx, GetBalanceById, input.Cif2)
 
 	var resultA model.Account
 	errA := futureA.Get(ctx, &resultA)
@@ -69,17 +68,17 @@ func AsyncWorkFlow(ctx workflow.Context) error {
 	ctx = workflow.WithActivityOptions(ctx, options)
 
 	var account model.Account
-	err := workflow.ExecuteActivity(ctx, activity.RegisterAccount, nil).Get(ctx, &account)
+	err := workflow.ExecuteActivity(ctx, RegisterAccount, nil).Get(ctx, &account)
 	if err != nil {
 		log.Fatal("Register account failed, err=", err)
 		return err
 	}
 	log.Println("💡Register account successfully, Account=", account)
 
-	_ = workflow.ExecuteActivity(ctx, activity.RegisterSms, &account).Get(ctx, &account)
+	_ = workflow.ExecuteActivity(ctx, RegisterSms, &account).Get(ctx, &account)
 	log.Println("💡Register sms successfully, Account=", account)
 
-	err = workflow.ExecuteActivity(ctx, activity.NotificationSms, &account).Get(ctx, &account)
+	err = workflow.ExecuteActivity(ctx, NotificationSms, &account).Get(ctx, &account)
 	if err != nil {
 		log.Fatal("Failed to send notification, err=", err)
 		return err

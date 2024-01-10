@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"demo-temporal/shared"
-	"demo-temporal/workflow"
+	"kingstonduy/demo-temporal/async"
+	"kingstonduy/demo-temporal/async/shared"
+
 	"log"
 
 	"github.com/pborman/uuid"
@@ -26,7 +27,7 @@ func main() {
 		TaskQueue: shared.TaskQueueName,
 	}
 
-	_, err = c.ExecuteWorkflow(context.Background(), optionsAsync, workflow.AsyncWorkFlow)
+	_, err = c.ExecuteWorkflow(context.Background(), optionsAsync, async.AsyncWorkFlow)
 	if err != nil {
 		log.Fatalln("Unable to execute async workflow", err)
 	}

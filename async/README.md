@@ -10,14 +10,14 @@ Problem: (worst case) sẽ như nào nếu giữa các workflow async đang ch�
 
 
 ```
-go run start/main.go
+go run async/started/main.go
 ```
 
 ```
-go run microservice/microservice.go 
+go run async/microservices/microservice.go 
 ```
 
 
 ```
-go run worker1/worker1.go 
+go run async/worker/worker.go 
 ```

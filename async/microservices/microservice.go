@@ -2,8 +2,8 @@ package main
 
 import (
 	"crypto/rand"
-	"demo-temporal/model"
 	"io"
+	"kingstonduy/demo-temporal/async/model"
 	"log"
 	"net/http"
 	"os"

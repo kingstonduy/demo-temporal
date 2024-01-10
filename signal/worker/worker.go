@@ -1,10 +1,10 @@
 package main
 
 import (
-	"demo-temporal/activity"
-	"demo-temporal/shared"
-	"demo-temporal/workflow"
 	"log"
+
+	"kingstonduy/demo-temporal/signal"
+	"kingstonduy/demo-temporal/signal/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -19,10 +19,10 @@ func main() {
 
 	w1 := worker.New(c, shared.TaskQueueName, worker.Options{})
 
-	w1.RegisterWorkflow(workflow.AsyncWorkFlow)
+	w1.RegisterWorkflow(signal.SignalWorkflow)
 
-	w1.RegisterActivity(activity.BlockingActivity)
-	w1.RegisterActivity(activity.InputActivity)
+	w1.RegisterActivity(signal.BlockingActivity)
+	w1.RegisterActivity(signal.InputActivity)
 
 	err = w1.Run(worker.InterruptCh())
 	if err != nil {

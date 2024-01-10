@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"demo-temporal/shared"
-	"demo-temporal/workflow"
 	"fmt"
 	"log"
+
+	"kingstonduy/demo-temporal/signal"
+	"kingstonduy/demo-temporal/signal/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
@@ -27,7 +28,7 @@ func main() {
 		TaskQueue: shared.TaskQueueName,
 	}
 
-	we, err := c.ExecuteWorkflow(context.Background(), optionsAsync, workflow.AsyncWorkFlow)
+	we, err := c.ExecuteWorkflow(context.Background(), optionsAsync, signal.SignalWorkflow)
 	if err != nil {
 		log.Fatalln("Unable to execute workflow", err)
 	}

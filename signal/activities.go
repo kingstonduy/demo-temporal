@@ -1,8 +1,9 @@
-package activity
+package signal
 
 import (
 	"context"
-	"demo-temporal/services"
+
+	"kingstonduy/demo-temporal/signal/services"
 )
 
 func BlockingActivity(ctx context.Context, input int) error {

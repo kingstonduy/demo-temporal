@@ -1,7 +1,6 @@
-package workflow
+package versioning_getVersionApis
 
 import (
-	"demo-temporal/activity"
 	"time"
 
 	"go.temporal.io/sdk/workflow"
@@ -28,16 +27,16 @@ func SimpleWorkflow(ctx workflow.Context) error {
 
 	if version == workflow.DefaultVersion {
 		// in ra default
-		workflow.ExecuteActivity(ctx, activity.GetInformation).Get(ctx, nil)
+		workflow.ExecuteActivity(ctx, GetInformation).Get(ctx, nil)
 	}
 
 	if version == 1 {
 		// in ra version 1
-		workflow.ExecuteActivity(ctx, activity.GetInformation1).Get(ctx, nil)
+		workflow.ExecuteActivity(ctx, GetInformation1).Get(ctx, nil)
 	}
 
 	// if version == 2 {
-	// 	workflow.ExecuteActivity(ctx, activity.GetInformation2).Get(ctx, nil)
+	// 	workflow.ExecuteActivity(ctx, GetInformation2).Get(ctx, nil)
 	// }
 
 	return nil

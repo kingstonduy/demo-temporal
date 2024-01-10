@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"demo-temporal/shared"
-	"demo-temporal/workflow"
 	"log"
 	"time"
 
-	"go.temporal.io/sdk/client"
+	versioning_getVersionApis "kingstonduy/demo-temporal/versioning-getVersionApis"
+	"kingstonduy/demo-temporal/versioning-getVersionApis/shared"
 
 	"github.com/pborman/uuid"
+	"go.temporal.io/sdk/client"
 )
 
 type Person struct {
@@ -33,9 +33,9 @@ func main() {
 		TaskQueue: shared.TaskQueueName,
 	}
 
-	_, _ = c.ExecuteWorkflow(context.Background(), option1, workflow.SimpleWorkflow)
+	_, _ = c.ExecuteWorkflow(context.Background(), option1, versioning_getVersionApis.SimpleWorkflow)
 
 	time.Sleep(time.Second * 20)
 
-	_, _ = c.ExecuteWorkflow(context.Background(), option2, workflow.SimpleWorkflow)
+	_, _ = c.ExecuteWorkflow(context.Background(), option2, versioning_getVersionApis.SimpleWorkflow)
 }

@@ -1,9 +1,10 @@
-package activity
+package versioning_getVersionApis
 
 import (
 	"context"
-	"demo-temporal/services"
 	"fmt"
+
+	"kingstonduy/demo-temporal/versioning-getVersionApis/services"
 )
 
 func GetInformation(ctx context.Context) (string, error) {

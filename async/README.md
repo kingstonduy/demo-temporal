@@ -14,7 +14,7 @@ go run async/started/main.go
 ```
 
 ```
-go run async/microservices/microservice.go 
+go run async/microservice/microservice.go 
 ```
 
 

@@ -1,9 +1,10 @@
-package activity
+package versioning_workflowtype
 
 import (
 	"context"
-	"demo-temporal/services"
 	"fmt"
+
+	"kingstonduy/demo-temporal/versioning-workflowtype/services"
 )
 
 func GetInformation(ctx context.Context) (string, error) {

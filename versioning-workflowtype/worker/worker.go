@@ -1,10 +1,10 @@
 package main
 
 import (
-	"demo-temporal/activity"
-	"demo-temporal/shared"
-	"demo-temporal/workflow"
 	"log"
+
+	versioning_workflowtype "kingstonduy/demo-temporal/versioning-workflowtype"
+	"kingstonduy/demo-temporal/versioning-workflowtype/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -19,11 +19,11 @@ func main() {
 
 	w := worker.New(c, shared.TaskQueueName, worker.Options{})
 
-	w.RegisterWorkflow(workflow.SimpleWorkflow)
-	w.RegisterActivity(activity.GetInformation)
+	w.RegisterWorkflow(versioning_workflowtype.SimpleWorkflow)
+	w.RegisterActivity(versioning_workflowtype.GetInformation)
 
-	w.RegisterWorkflow(workflow.SimpleWorkflow1)
-	w.RegisterActivity(activity.GetInformation1)
+	w.RegisterWorkflow(versioning_workflowtype.SimpleWorkflow1)
+	w.RegisterActivity(versioning_workflowtype.GetInformation1)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {

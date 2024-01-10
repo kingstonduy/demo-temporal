@@ -1,7 +1,6 @@
-package workflow
+package versioning_workflowtype
 
 import (
-	"demo-temporal/activity"
 	"time"
 
 	"go.temporal.io/sdk/workflow"
@@ -23,7 +22,7 @@ func SimpleWorkflow(ctx workflow.Context) error {
 	}
 
 	ctx = workflow.WithActivityOptions(ctx, options)
-	workflow.ExecuteActivity(ctx, activity.GetInformation).Get(ctx, nil)
+	workflow.ExecuteActivity(ctx, GetInformation).Get(ctx, nil)
 	return nil
 }
 
@@ -41,6 +40,6 @@ func SimpleWorkflow1(ctx workflow.Context) error {
 	}
 
 	ctx = workflow.WithActivityOptions(ctx, options)
-	workflow.ExecuteActivity(ctx, activity.GetInformation1).Get(ctx, nil)
+	workflow.ExecuteActivity(ctx, GetInformation1).Get(ctx, nil)
 	return nil
 }

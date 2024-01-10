@@ -3,10 +3,10 @@ Implement: 1 workflow dang chay (50s), ta muốn thay đổi logic cho workflow 
 
 
 ```
-go run start/main.go
+go run versioning-workflowtype/start/main.go
 ```
 
 
 ```
-go run worker1/worker1.go 
+go run versioning-workflowtype/worker/worker.go 
 ```

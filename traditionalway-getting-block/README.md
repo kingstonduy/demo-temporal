@@ -4,7 +4,7 @@ Fix: tạo 1 thread cho activity cần input và 1 thread cho các non-blocking 
 
 
 ```
-go run traditionalway-getting-block/started/main.go async
+go run traditionalway-getting-block/started/main.go
 ```
 
 ```

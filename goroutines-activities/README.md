@@ -5,14 +5,14 @@ Vì ".Get() blocks until the future is ready" mình tạo 1 go routine (light we
 Problem v có cách nào dùng signal không ? branch [signal](https://github.com/kingstonduy/demo-temporal/tree/signal)
 
 ```
-go run start/main.go async
+go run goroutines-activities/started/main.go async
 ```
 
 ```
-go run microservice/microservice.go 
+go run goroutines-activities/microservice/microservice.go 
 ```
 
 
 ```
-go run worker1/worker1.go 
+go run goroutines-activities/worker/worker.go 
 ```

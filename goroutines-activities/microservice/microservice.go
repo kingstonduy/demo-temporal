@@ -2,12 +2,13 @@ package main
 
 import (
 	"crypto/rand"
-	"demo-temporal/model"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"kingstonduy/demo-temporal/goroutines-activities/model"
 
 	"github.com/gin-gonic/gin"
 )

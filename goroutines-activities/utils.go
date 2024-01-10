@@ -1,4 +1,4 @@
-package utils
+package goroutines_activities
 
 import (
 	"bytes"
@@ -62,31 +62,6 @@ func PostApi[T any, K any](url string, requestType *T, responseType *K) error {
 	fmt.Println("Reponse body in utils", responseType)
 	return nil
 }
-
-// func SendToApi[T any](url string, tp string, body io.Reader, responseType *T) error {
-// 	resp, err := http.Post(url, "application/json", body)
-// 	defer resp.Body.Close()
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	resBodyByte, err := io.ReadAll(resp.Body)
-
-// 	err = json.Unmarshal(resBodyByte, &responseType)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	status := resp.StatusCode
-// 	if status >= 400 {
-// 		// API service dead
-// 		message := fmt.Sprintf("HTTP Error %d: %+v", status, responseType)
-// 		return errors.New(message)
-// 	}
-
-// 	return nil
-// }
 
 func convertObjectIntoRequestBody[T any](obj T) (io.Reader, error) {
 	var buf bytes.Buffer

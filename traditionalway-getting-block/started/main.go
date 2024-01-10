@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"demo-temporal/shared"
-	"demo-temporal/workflow"
 	"log"
+
+	traditionalway_getting_block "kingstonduy/demo-temporal/traditionalway-getting-block"
+	"kingstonduy/demo-temporal/traditionalway-getting-block/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
@@ -26,7 +27,7 @@ func main() {
 		TaskQueue: shared.TaskQueueName,
 	}
 
-	_, err = c.ExecuteWorkflow(context.Background(), option1, workflow.AsyncWorkFlow1)
+	_, err = c.ExecuteWorkflow(context.Background(), option1, traditionalway_getting_block.BlockingWorkflow)
 	if err != nil {
 		log.Fatalln("Unable to execute async workflow", err)
 	}

@@ -1,12 +1,11 @@
-package activity
+package traditionalway_getting_block
 
 import (
 	"context"
-	"demo-temporal/model"
 	"fmt"
 	"time"
 
-	utils "demo-temporal"
+	"kingstonduy/demo-temporal/traditionalway-getting-block/model"
 
 	"go.temporal.io/sdk/activity"
 )
@@ -19,7 +18,7 @@ func Withdraw(ctx context.Context) (bool, error) {
 
 	var requestType string
 	var responseType string
-	err := utils.PostApi(url, &requestType, &responseType)
+	err := PostApi(url, &requestType, &responseType)
 	if err != nil {
 		log.Error("🔥Error when calling API", err)
 		return false, err
@@ -35,7 +34,7 @@ func ResendOtp(ctx context.Context) error {
 	url := fmt.Sprintf("http://localhost:8080/otp/resend/")
 
 	var responseType string
-	err := utils.GetApi(url, &responseType)
+	err := GetApi(url, &responseType)
 	if err != nil {
 		log.Error("🔥Error when calling API", err)
 		return err
@@ -60,7 +59,7 @@ func UserInputOtp(ctx context.Context, inputt bool) (bool, error) {
 
 		url := fmt.Sprintf("http://localhost:8080/otp/verify/")
 		var responseType model.ResponseOtp
-		err := utils.PostApi(url, &otpRequest, &responseType)
+		err := PostApi(url, &otpRequest, &responseType)
 		if err != nil && err.Error() == "" {
 			log.Error("Error when calling API", err)
 			return false, err
@@ -84,7 +83,7 @@ func Notification(ctx context.Context, inputt bool) error {
 	url := fmt.Sprintf("http://localhost:8080/notification/")
 
 	var responseType string
-	err := utils.GetApi(url, &responseType)
+	err := GetApi(url, &responseType)
 	if err != nil {
 		log.Error("🔥Error when calling API", err)
 		return err
@@ -98,7 +97,7 @@ func LongAcitivity(ctx context.Context) error {
 	log.Info("Withdraw activity started")
 	url := fmt.Sprintf("http://localhost:8080/OCB/info/")
 	var responseType string
-	err := utils.GetApi(url, &responseType)
+	err := GetApi(url, &responseType)
 	if err != nil {
 		log.Error("🔥Error when calling API", err)
 		return err

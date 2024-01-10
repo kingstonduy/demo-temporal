@@ -1,14 +1,12 @@
-package workflow
+package traditionalway_getting_block
 
 import (
 	"time"
 
-	activity "demo-temporal/activity"
-
 	"go.temporal.io/sdk/workflow"
 )
 
-func AsyncWorkFlow1(ctx workflow.Context) error {
+func BlockingWorkflow(ctx workflow.Context) error {
 
 	// retryPolicy := &temporal.RetryPolicy{
 	// 	InitialInterval: time.Second,
@@ -24,21 +22,21 @@ func AsyncWorkFlow1(ctx workflow.Context) error {
 	ctx = workflow.WithActivityOptions(ctx, options)
 
 	var flag bool
-	err := workflow.ExecuteActivity(ctx, activity.Withdraw, nil).Get(ctx, &flag)
+	err := workflow.ExecuteActivity(ctx, Withdraw, nil).Get(ctx, &flag)
 	if err != nil {
 		return err
 	}
 
-	err = workflow.ExecuteActivity(ctx, activity.UserInputOtp, flag).Get(ctx, &flag)
+	err = workflow.ExecuteActivity(ctx, UserInputOtp, flag).Get(ctx, &flag)
 	if err != nil {
 		return err
 	}
 
 	// getting blocked activity
-	future := workflow.ExecuteActivity(ctx, activity.LongAcitivity, nil)
+	future := workflow.ExecuteActivity(ctx, LongAcitivity, nil)
 
 	if flag == true {
-		err = workflow.ExecuteActivity(ctx, activity.Notification, flag).Get(ctx, nil)
+		err = workflow.ExecuteActivity(ctx, Notification, flag).Get(ctx, nil)
 		if err != nil {
 			return err
 		}

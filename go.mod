@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/pborman/uuid v1.2.1
 	go.temporal.io/sdk v1.25.1
+	gopkg.in/yaml.v2 v2.2.3
 )
 
 require (

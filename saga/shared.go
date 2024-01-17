@@ -54,5 +54,7 @@ type ValidateAccountInput struct {
 }
 
 type ValidateAccountOutput struct {
-	IsValid bool `json:"isValid"`
+	AccountId   string `json:"accountId"`
+	AccountName string `json:"accountName"`
+	Amount      int    `json:"amount"`
 }

@@ -27,7 +27,6 @@ func GetConnection() (*gorm.DB, error) {
 }
 
 func CreateEntity(db *gorm.DB, entity shared.NapasEntity) error {
-	db.Table("napas")
 	result := db.Create(entity)
 	if result.Error != nil {
 		return result.Error
@@ -36,7 +35,6 @@ func CreateEntity(db *gorm.DB, entity shared.NapasEntity) error {
 }
 
 func DeleteUser(db *gorm.DB, entity shared.NapasEntity) error {
-	db.Table("napas")
 	result := db.Delete(entity)
 	if result.Error != nil {
 		return result.Error
@@ -45,7 +43,6 @@ func DeleteUser(db *gorm.DB, entity shared.NapasEntity) error {
 }
 
 func UpdateUser(db *gorm.DB, entity shared.NapasEntity) error {
-	db.Table("napas")
 	result := db.Save(user)
 	if result.Error != nil {
 		return result.Error

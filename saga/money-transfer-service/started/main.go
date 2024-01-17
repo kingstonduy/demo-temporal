@@ -1,34 +1,26 @@
 package main
 
-import (
-	"context"
-	"kingstonduy/demo-temporal/async"
-	"kingstonduy/demo-temporal/async/shared"
-	money_transfer_service "kingstonduy/demo-temporal/saga/money-transfer-service"
-
-	"log"
-
-	"github.com/pborman/uuid"
-	"go.temporal.io/sdk/client"
-)
-
 func main() {
-	c, err := client.Dial(client.Options{})
-	if err != nil {
-		log.Fatalln("Unable to create client", err)
-	}
-	defer c.Close()
+	// c, err := client.Dial(client.Options{})
+	// if err != nil {
+	// 	log.Fatalln("Unable to create client", err)
+	// }
+	// defer c.Close()
 
-	var config money_transfer_service.Config
-	config.GetInstance()
+	// option := client.StartWorkflowOptions{
+	// 	ID:        shared.Workflow + "_" + uuid.New(),
+	// 	TaskQueue: shared.TaskQueue,
+	// }
 
-	optionsAsync := client.StartWorkflowOptions{
-		ID:        config.MONEY_TRANSFER_SERVICE.WORKFLOW_NAME + "_" + uuid.New(),
-		TaskQueue: shared.TaskQueueName,
-	}
+	// transferInfo := shared.TransactionInfo{
+	// 	TransactionId: uuid.New(),
+	// 	FromAccountId: "1",
+	// 	ToAccountId:   "2",
+	// 	Amount:        100,
+	// }
 
-	_, err = c.ExecuteWorkflow(context.Background(), optionsAsync, async.AsyncWorkFlow)
-	if err != nil {
-		log.Fatalf("Unable to execute %s workflow\n", optionsAsync.ID, err)
-	}
+	// _, err = c.ExecuteWorkflow(context.Background(), option, app.MoneyTransferWorkflow, transferInfo)
+	// if err != nil {
+	// 	log.Fatalf("Unable to execute %s workflow\n", option.ID, err)
+	// }
 }

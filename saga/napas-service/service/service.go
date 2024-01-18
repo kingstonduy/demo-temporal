@@ -12,7 +12,8 @@ func VerifyAccount(input shared.ValidateAccountInput) (shared.NapasEntity, error
 		return shared.NapasEntity{}, errors.New("Cannot connect to database")
 	}
 
-	napasEntity, err := repository.GetUserByID(db, input.AccountId)
+	var napasEntity = shared.NapasEntity{}
+	err = repository.GetUserByID(db, input.AccountId, &napasEntity)
 	if err != nil {
 		return shared.NapasEntity{}, errors.New("Cannot find account")
 	}
@@ -26,7 +27,8 @@ func UpdateMoney(input shared.SaferRequest) error {
 		return errors.New("Cannot connect to database")
 	}
 
-	napasEntity, err := repository.GetUserByID(db, input.AccountId)
+	var napasEntity = shared.NapasEntity{}
+	err = repository.GetUserByID(db, input.AccountId, &napasEntity)
 	if err != nil {
 		return errors.New("Cannot find account")
 	}

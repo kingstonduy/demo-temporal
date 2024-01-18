@@ -34,7 +34,7 @@ func CreateEntity(db *gorm.DB, entity shared.NapasEntity) error {
 	return nil
 }
 
-func DeleteUser(db *gorm.DB, entity shared.NapasEntity) error {
+func DeleteUser[K any](db *gorm.DB, entity K) error {
 	result := db.Delete(entity)
 	if result.Error != nil {
 		return result.Error
@@ -42,7 +42,7 @@ func DeleteUser(db *gorm.DB, entity shared.NapasEntity) error {
 	return nil
 }
 
-func UpdateUser(db *gorm.DB, entity shared.NapasEntity) error {
+func UpdateUser[K any](db *gorm.DB, entity K) error {
 	result := db.Save(entity)
 	if result.Error != nil {
 		return result.Error
@@ -50,11 +50,10 @@ func UpdateUser(db *gorm.DB, entity shared.NapasEntity) error {
 	return nil
 }
 
-func GetUserByID(db *gorm.DB, id string) (shared.NapasEntity, error) {
-	var result shared.NapasEntity
+func GetUserByID[K any](db *gorm.DB, id string, result *K) error {
 	err := db.Where("account_id = ?", id).First(&result).Error
 	if err != nil {
-		return shared.NapasEntity{}, errors.New("Cannot find account")
+		return errors.New("Cannot find account")
 	}
-	return result, nil
+	return nil
 }

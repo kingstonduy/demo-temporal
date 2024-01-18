@@ -2,6 +2,7 @@ package main
 
 import (
 	shared "kingstonduy/demo-temporal/saga"
+	"kingstonduy/demo-temporal/saga/limitation-manage-service/service"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,6 +45,16 @@ func limit(c *gin.Context) {
 		return
 	}
 
+	err = service.LimitService(req)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, shared.SaferResponse{
+		Code:    http.StatusOK,
+		Message: "Success",
+	})
 }
 
 func main() {

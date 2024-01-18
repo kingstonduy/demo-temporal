@@ -1,20 +1,19 @@
-package repository
+package shared
 
 import (
 	"errors"
 	"fmt"
-	shared "kingstonduy/demo-temporal/saga"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 const (
-	host     = shared.POSTGRES_HOST
-	port     = shared.POSTGRES_PORT
-	user     = shared.POSTGRES_USER
-	password = shared.POSTGRES_PASSWORD
-	dbname   = shared.POSTGRES_DBNAME
+	host     = POSTGRES_HOST
+	port     = POSTGRES_PORT
+	user     = POSTGRES_USER
+	password = POSTGRES_PASSWORD
+	dbname   = POSTGRES_DBNAME
 )
 
 func GetConnection() (*gorm.DB, error) {
@@ -26,7 +25,7 @@ func GetConnection() (*gorm.DB, error) {
 	return db, nil
 }
 
-func CreateEntity(db *gorm.DB, entity shared.NapasEntity) error {
+func CreateEntity[K any](db *gorm.DB, entity K) error {
 	result := db.Create(entity)
 	if result.Error != nil {
 		return result.Error

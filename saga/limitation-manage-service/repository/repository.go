@@ -26,7 +26,7 @@ func GetConnection() (*gorm.DB, error) {
 	return db, nil
 }
 
-func CreateEntity(db *gorm.DB, entity shared.NapasEntity) error {
+func CreateEntity[K any](db *gorm.DB, entity K) error {
 	result := db.Create(entity)
 	if result.Error != nil {
 		return result.Error

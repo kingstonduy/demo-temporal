@@ -2,21 +2,20 @@ package service
 
 import (
 	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/napas-service/repository"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestVerify(t *testing.T) {
-	db, err := repository.GetConnection()
+	db, err := shared.GetConnection()
 	if err != nil {
 		t.Error(err)
 	}
 
 	entity := shared.NapasEntity{AccountId: "1", AccountName: "Duy", Amount: 1000}
 
-	repository.CreateEntity(db, entity)
+	shared.CreateEntity(db, entity)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,14 +33,14 @@ func TestVerify(t *testing.T) {
 }
 
 func TestUpdateMoney(t *testing.T) {
-	db, err := repository.GetConnection()
+	db, err := shared.GetConnection()
 	if err != nil {
 		t.Error(err)
 	}
 
 	entity := shared.NapasEntity{AccountId: "1", AccountName: "Duy", Amount: 1000}
 
-	repository.CreateEntity(db, entity)
+	shared.CreateEntity(db, entity)
 	if err != nil {
 		t.Error(err)
 	}

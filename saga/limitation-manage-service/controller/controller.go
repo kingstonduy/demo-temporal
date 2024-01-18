@@ -2,47 +2,10 @@ package main
 
 import (
 	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/napas-service/service"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
-
-func verify(c *gin.Context) {
-	var req shared.ValidateAccountInput
-	err := c.BindJSON(&req)
-	if err != nil {
-		HandleError(c, err)
-		return
-	}
-
-	napasEntity, err := service.VerifyAccount(req)
-	if err != nil {
-		HandleError(c, err)
-		return
-	}
-	c.IndentedJSON(http.StatusOK, napasEntity)
-}
-
-func update(c *gin.Context) {
-	var req shared.SaferRequest
-	err := c.BindJSON(&req)
-	if err != nil {
-		HandleError(c, err)
-		return
-	}
-
-	err = service.UpdateMoney(req)
-	if err != nil {
-		HandleError(c, err)
-		return
-	}
-
-	c.IndentedJSON(http.StatusOK, shared.SaferResponse{
-		Code:    http.StatusOK,
-		Message: "Success",
-	})
-}
 
 func HandleError(c *gin.Context, err error) {
 	switch err.Error() {
@@ -73,9 +36,18 @@ func HandleError(c *gin.Context, err error) {
 	}
 }
 
+func limit(c *gin.Context) {
+	var req shared.SaferRequest
+	err := c.BindJSON(&req)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+}
+
 func main() {
 	router := gin.Default()
-	router.POST("/api/v1/account/verify", verify)
-	router.POST("/api/v1/account/update", update)
-	router.Run("localhost:7204")
+	router.POST("/api/v1/account/limit", limit)
+	router.Run("localhost:7202")
 }

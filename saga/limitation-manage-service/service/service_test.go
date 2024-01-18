@@ -2,20 +2,19 @@ package service
 
 import (
 	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/napas-service/repository"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLimitService(t *testing.T) {
-	db, err := repository.GetConnection()
+	db, err := shared.GetConnection()
 	if err != nil {
 		t.Error(err)
 	}
 
 	entity := shared.AccountLimitEntity{AccountId: "1", Amount: 1000}
-	err = repository.CreateEntity(db, entity)
+	err = shared.CreateEntity(db, entity)
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,7 +27,7 @@ func TestLimitService(t *testing.T) {
 	}
 
 	entity1 := shared.AccountLimitEntity{}
-	err = repository.GetUserByID(db, "1", &entity1)
+	err = shared.GetUserByID(db, "1", &entity1)
 	if err != nil {
 		t.Error(err)
 	}

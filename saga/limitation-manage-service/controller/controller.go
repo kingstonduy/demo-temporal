@@ -60,5 +60,5 @@ func limit(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.POST("/api/v1/account/limit", limit)
-	router.Run("localhost:7202")
+	router.Run(shared.LIMITATION_SERVICE_URL)
 }

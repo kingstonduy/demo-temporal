@@ -3,17 +3,16 @@ package service
 import (
 	"errors"
 	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/napas-service/repository"
 )
 
 func LimitService(input shared.SaferRequest) error {
-	db, err := repository.GetConnection()
+	db, err := shared.GetConnection()
 	if err != nil {
 		return errors.New("Cannot connect to database")
 	}
 
 	var limitEntity = shared.AccountLimitEntity{}
-	err = repository.GetUserByID(db, input.AccountId, &limitEntity)
+	err = shared.GetUserByID(db, input.AccountId, &limitEntity)
 	if err != nil {
 		return errors.New("Cannot find account")
 	}
@@ -23,7 +22,7 @@ func LimitService(input shared.SaferRequest) error {
 	}
 
 	limitEntity.Amount -= input.Amount
-	err = repository.UpdateUser(db, limitEntity)
+	err = shared.UpdateUser(db, limitEntity)
 	if err != nil {
 		return errors.New("Cannot update account")
 	}

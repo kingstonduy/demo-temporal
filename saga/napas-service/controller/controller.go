@@ -77,5 +77,5 @@ func main() {
 	router := gin.Default()
 	router.POST("/api/v1/account/verify", verify)
 	router.POST("/api/v1/account/update", update)
-	router.Run("localhost:7204")
+	router.Run(shared.NAPAS_SERVICE_URL)
 }

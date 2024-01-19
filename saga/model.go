@@ -25,6 +25,10 @@ type T24Entity struct {
 	Amount    int    `gorm:"column:amount"`
 }
 
+func (T24Entity) TableName() string {
+	return "t24"
+}
+
 type AccountLimitEntity struct {
 	AccountId string `gorm:"primaryKey";column:account_id`
 	Amount    int    `gorm:"column:amount"`

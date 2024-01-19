@@ -9,7 +9,7 @@ CREATE TABLE public.money_transfer (
 
 CREATE TABLE public.limit_manage (
 	account_id varchar NOT NULL,
-	"limit" int NOT NULL,
+	amount int NOT NULL,
 	CONSTRAINT limit_manage_pk PRIMARY KEY (account_id)
 );
 
@@ -18,4 +18,10 @@ CREATE TABLE public.napas (
 	account_name varchar NOT NULL,
 	amount int NOT NULL,
 	CONSTRAINT napas_pk PRIMARY KEY (account_id)
+);
+
+CREATE TABLE public.t24 (
+	account_id varchar NOT NULL,
+	amount int NULL,
+	CONSTRAINT t24_pk PRIMARY KEY (account_id)
 );

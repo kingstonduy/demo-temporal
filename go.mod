@@ -4,9 +4,11 @@ go 1.20
 
 require (
 	github.com/gin-gonic/gin v1.9.1
-	github.com/lib/pq v1.10.9
 	github.com/pborman/uuid v1.2.1
+	github.com/stretchr/testify v1.8.4
 	go.temporal.io/sdk v1.25.1
+	gorm.io/driver/postgres v1.5.4
+	gorm.io/gorm v1.25.5
 )
 
 require (
@@ -44,7 +46,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.temporal.io/api v1.24.0 // indirect
@@ -62,6 +63,4 @@ require (
 	google.golang.org/grpc v1.57.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.5.4 // indirect
-	gorm.io/gorm v1.25.5 // indirect
 )

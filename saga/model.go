@@ -6,10 +6,10 @@ type Compensations struct {
 }
 
 type TransactionInfo struct {
-	TransactionId string
-	FromAccountId string
-	ToAccountId   string
-	Amount        int
+	TransactionId string `json:"transactionId"`
+	FromAccountId string `json:"fromAccountId"`
+	ToAccountId   string `json:"toAccountId"`
+	Amount        int    `json:"amount"`
 }
 
 type TransactionEntity struct {
@@ -18,6 +18,10 @@ type TransactionEntity struct {
 	ToAccountId   string `gorm:"column:to_account_id"`
 	Amount        int    `gorm:"column:amount"`
 	State         string `gorm:"column:state"`
+}
+
+func (*TransactionEntity) TableName() string {
+	return "transaction"
 }
 
 type T24Entity struct {

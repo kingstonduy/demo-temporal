@@ -2,22 +2,46 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	shared "kingstonduy/demo-temporal/saga"
 	"time"
 )
 
-var timeout = time.Second * 5
+var timeout = time.Second * 1
 
 func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Validate Account successfully")
+	// log := activity.GetLogger(ctx)
+	// log.Info("💡Validate Account activity starts")
+
+	// url := fmt.Sprintf("http://localhost:8080/otp/verify/")
+	// var responseType shared.NapasEntity
+	// err := shared.PostApi(url, &input, &responseType)
+	// if err != nil {
+	// 	return errors.New("Cannot validate account")
+	// }
+	// log.Info("💡Validate Account activity ends")
+	// return nil
+	fmt.Println("💡Validate account")
 	time.Sleep(timeout)
 	return nil
 }
 
-func UpdateStateCreated(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Update State created successfully")
+func UpdateStateCreated(ctx context.Context, input shared.TransactionEntity) error {
+	// log := activity.GetLogger(ctx)
+	// log.Info("💡Persist transaction to database starts")
+	// db, err := shared.GetConnection()
+	// if err != nil {
+	// 	return errors.New("Cannot connect to database")
+	// }
+
+	// err = shared.CreateEntity(db, input)
+	// if err != nil {
+	// 	return errors.New("Cannot create transaction")
+	// }
+	// log.Info("💡Update state created successfully")
+	// return nil
+
+	fmt.Println("💡Update State created")
 	time.Sleep(timeout)
 	return nil
 }
@@ -90,8 +114,8 @@ func UpdateMoneyCompensate(ctx context.Context, input shared.TransactionInfo) er
 
 func UpdateStateTransactionCompleted(ctx context.Context, input shared.TransactionInfo) error {
 	fmt.Println("💡Update  state transaction completed")
-	return errors.New("")
-	// time.Sleep(timeout)
+	// return errors.New("")
+	time.Sleep(timeout)
 	return nil
 }
 

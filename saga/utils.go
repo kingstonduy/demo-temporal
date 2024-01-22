@@ -33,15 +33,15 @@ func GetApi[T any](url string, responseType *T) error {
 	return nil
 }
 
-func PostApi[T any, K any](url string, requestType *T) (responseType *K, err error) {
+func PostApi[T any, K any](url string, requestType *T, responseType *K) error {
 	reqReader, err := convertObjectIntoRequestBody(requestType)
 	if err != nil {
-		return responseType, err
+		return err
 	}
 
 	resp, err := http.Post(url, "application/json", reqReader)
 	if err != nil {
-		return responseType, err
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -52,15 +52,15 @@ func PostApi[T any, K any](url string, requestType *T) (responseType *K, err err
 		// API service dead
 		message := fmt.Sprintf("HTTP Error %d: %+v", status, responseType)
 
-		return responseType, errors.New(message)
+		return errors.New(message)
 	} else if status != 200 {
 		// API service dead
 		message := fmt.Sprintf("HTTP Error %d: %+v", status, responseType)
-		return responseType, errors.New(message)
+		return errors.New(message)
 	}
 
 	fmt.Println("Reponse body in utils", responseType)
-	return responseType, nil
+	return nil
 }
 
 func convertObjectIntoRequestBody[T any](obj T) (io.Reader, error) {

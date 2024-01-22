@@ -12,7 +12,7 @@ func VerifyAccount(input shared.ValidateAccountInput) (shared.NapasEntity, error
 	}
 
 	var napasEntity = shared.NapasEntity{}
-	err = shared.GetUserByID(db, input.AccountId, &napasEntity)
+	err = shared.GetEntityByID(db, input.AccountId, &napasEntity)
 	if err != nil {
 		return shared.NapasEntity{}, errors.New("Cannot find account")
 	}
@@ -27,7 +27,7 @@ func UpdateMoney(input shared.SaferRequest) error {
 	}
 
 	var napasEntity = shared.NapasEntity{}
-	err = shared.GetUserByID(db, input.AccountId, &napasEntity)
+	err = shared.GetEntityByID(db, input.AccountId, &napasEntity)
 	if err != nil {
 		return errors.New("Cannot find account")
 	}
@@ -37,7 +37,7 @@ func UpdateMoney(input shared.SaferRequest) error {
 		return errors.New("Not enough money")
 	}
 
-	err = shared.UpdateUser(db, napasEntity)
+	err = shared.UpdateEntity(db, napasEntity)
 	if err != nil {
 		return errors.New("Cannot update account")
 	}

@@ -33,7 +33,7 @@ func CreateEntity[K any](db *gorm.DB, entity K) error {
 	return nil
 }
 
-func DeleteUser[K any](db *gorm.DB, entity K) error {
+func DeleteEntity[K any](db *gorm.DB, entity K) error {
 	result := db.Delete(entity)
 	if result.Error != nil {
 		return result.Error
@@ -41,7 +41,7 @@ func DeleteUser[K any](db *gorm.DB, entity K) error {
 	return nil
 }
 
-func UpdateUser[K any](db *gorm.DB, entity K) error {
+func UpdateEntity[K any](db *gorm.DB, entity K) error {
 	result := db.Save(entity)
 	if result.Error != nil {
 		return result.Error
@@ -49,7 +49,7 @@ func UpdateUser[K any](db *gorm.DB, entity K) error {
 	return nil
 }
 
-func GetUserByID[K any](db *gorm.DB, id string, result *K) error {
+func GetEntityByID[K any](db *gorm.DB, id string, result *K) error {
 	err := db.Where("account_id = ?", id).First(&result).Error
 	if err != nil {
 		return errors.New("Cannot find account")

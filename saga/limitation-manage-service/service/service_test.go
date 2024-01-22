@@ -27,7 +27,7 @@ func TestLimitService(t *testing.T) {
 	}
 
 	entity1 := shared.AccountLimitEntity{}
-	err = shared.GetUserByID(db, "1", &entity1)
+	err = shared.GetEntityByID(db, "1", &entity1)
 	if err != nil {
 		t.Error(err)
 	}

@@ -12,7 +12,7 @@ func AmountService(input shared.SaferRequest) error {
 	}
 
 	var t24Entity = shared.T24Entity{}
-	err = shared.GetUserByID(db, input.AccountId, &t24Entity)
+	err = shared.GetEntityByID(db, input.AccountId, &t24Entity)
 	if err != nil {
 		return errors.New("Cannot find account")
 	}
@@ -22,7 +22,7 @@ func AmountService(input shared.SaferRequest) error {
 	}
 
 	t24Entity.Amount += input.Amount
-	err = shared.UpdateUser(db, t24Entity)
+	err = shared.UpdateEntity(db, t24Entity)
 	if err != nil {
 		return errors.New("Cannot update account")
 	}

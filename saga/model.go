@@ -8,7 +8,7 @@ type Compensations struct {
 type TransactionInfo struct {
 	TransactionId string `json:"transactionId"`
 	FromAccountId string `json:"fromAccountId"`
-	ToAccountId   string `json:"toAccountId"`
+	ToAccountId   string `json:"toAccountId"  `
 	Amount        int    `json:"amount"`
 }
 

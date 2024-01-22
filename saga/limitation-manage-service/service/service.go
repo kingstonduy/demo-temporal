@@ -12,7 +12,7 @@ func LimitService(input shared.SaferRequest) error {
 	}
 
 	var limitEntity = shared.AccountLimitEntity{}
-	err = shared.GetUserByID(db, input.AccountId, &limitEntity)
+	err = shared.GetEntityByID(db, input.AccountId, &limitEntity)
 	if err != nil {
 		return errors.New("Cannot find account")
 	}
@@ -22,7 +22,7 @@ func LimitService(input shared.SaferRequest) error {
 	}
 
 	limitEntity.Amount -= input.Amount
-	err = shared.UpdateUser(db, limitEntity)
+	err = shared.UpdateEntity(db, limitEntity)
 	if err != nil {
 		return errors.New("Cannot update account")
 	}

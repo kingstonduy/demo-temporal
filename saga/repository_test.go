@@ -20,7 +20,7 @@ func TestCRUD(t *testing.T) {
 	}
 
 	var entity1 NapasEntity
-	err = GetUserByID(db, entity.AccountId, &entity1)
+	err = GetEntityByID(db, entity.AccountId, &entity1)
 	if err != nil {
 		t.Error(err)
 	}

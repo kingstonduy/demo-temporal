@@ -8,42 +8,6 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-type Compensations struct {
-	compensations []any
-	arguments     [][]any
-}
-
-func (s *Compensations) AddCompensation(activity any, parameters ...any) {
-	s.compensations = append(s.compensations, activity)
-	s.arguments = append(s.arguments, parameters)
-}
-
-func (s Compensations) Compensate(ctx workflow.Context, inParallel bool) {
-	if !inParallel {
-		// Compensate in Last-In-First-Out order, to undo in the reverse order that activies were applied.
-		for i := len(s.compensations) - 1; i >= 0; i-- {
-			errCompensation := workflow.ExecuteActivity(ctx, s.compensations[i], s.arguments[i]...).Get(ctx, nil)
-			if errCompensation != nil {
-				workflow.GetLogger(ctx).Error("Executing compensation failed", "Error", errCompensation)
-			}
-		}
-	} else {
-		selector := workflow.NewSelector(ctx)
-		for i := 0; i < len(s.compensations); i++ {
-			execution := workflow.ExecuteActivity(ctx, s.compensations[i], s.arguments[i]...)
-			selector.AddFuture(execution, func(f workflow.Future) {
-				if errCompensation := f.Get(ctx, nil); errCompensation != nil {
-					workflow.GetLogger(ctx).Error("Executing compensation failed", "Error", errCompensation)
-				}
-			})
-		}
-		for range s.compensations {
-			selector.Select(ctx)
-		}
-
-	}
-}
-
 func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (err error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 10,
@@ -62,50 +26,70 @@ func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (e
 	}()
 
 	// just read the database, dont need to compensate
-	// compensations.AddCompensation(ValidateAccount)
 	err = workflow.ExecuteActivity(ctx, ValidateAccount, info).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(UpdateStateCreateCompensate)
-	err = workflow.ExecuteActivity(ctx, UpdateStateCreated, info).Get(ctx, nil)
+	var transactionEntity = shared.TransactionEntity{
+		TransactionId: info.TransactionId,
+		FromAccountId: info.FromAccountId,
+		ToAccountId:   info.ToAccountId,
+		Amount:        info.Amount,
+		State:         "CREATED",
+	}
+
+	// ghi vao db trang thai CREATED
+	compensations.AddCompensation(CompensateTransaction, &shared.TransactionEntity{
+		TransactionId: info.TransactionId,
+		FromAccountId: info.FromAccountId,
+		ToAccountId:   info.ToAccountId,
+		Amount:        info.Amount,
+		State:         "CANCELLED",
+	})
+	err = workflow.ExecuteActivity(ctx, UpdateStateCreated, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(LimitCutCompensate)
+	// tru han muc giao dich
+	compensations.AddCompensation(LimitCutCompensate, info)
 	err = workflow.ExecuteActivity(ctx, LimitCut, info).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(UpdateStateLimitCutCompensate)
-	err = workflow.ExecuteActivity(ctx, UpdateStateLimitCut, info).Get(ctx, nil)
+	// ghi vao db trang thai LIMIT_CUT
+	transactionEntity.State = "LIMIT_CUT"
+	err = workflow.ExecuteActivity(ctx, UpdateStateLimitCut, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(MoneyCutCompensate)
+	// goi t24 cat tien tai khoan ocb
+	compensations.AddCompensation(MoneyCutCompensate, info)
 	err = workflow.ExecuteActivity(ctx, MoneyCut, info).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(UpdateStateMoneyCutCompensate)
+	// ghi vao db trang thai MONEY_CUT
+	transactionEntity.State = "MONEY_CUT"
 	err = workflow.ExecuteActivity(ctx, UpdateStateMoneyCut, info).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(UpdateMoneyCompensate)
+	// goi napas ghi co vao tai khoan thu huong
+	compensations.AddCompensation(UpdateMoneyCompensate, info)
 	err = workflow.ExecuteActivity(ctx, UpdateMoney, info).Get(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	compensations.AddCompensation(UpdateStateTransactionCompletedCompensate)
-	err = workflow.ExecuteActivity(ctx, UpdateStateTransactionCompleted, info).Get(ctx, nil)
+	// ghi vao db trang thai COMPLETE
+	transactionEntity.State = "COMPLETED"
+	err = workflow.ExecuteActivity(ctx, UpdateStateTransactionCompleted, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return err
 	}

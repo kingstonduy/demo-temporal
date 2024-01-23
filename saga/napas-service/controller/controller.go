@@ -3,6 +3,7 @@ package main
 import (
 	shared "kingstonduy/demo-temporal/saga"
 	"kingstonduy/demo-temporal/saga/napas-service/service"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,7 @@ func verify(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-
+	log.Printf("💡req: %+v", req)
 	napasEntity, err := service.VerifyAccount(req)
 	if err != nil {
 		HandleError(c, err)
@@ -77,5 +78,5 @@ func main() {
 	router := gin.Default()
 	router.POST("/api/v1/account/verify", verify)
 	router.POST("/api/v1/account/update", update)
-	router.Run(shared.NAPAS_SERVICE_URL)
+	router.Run(shared.NAPAS_SERVICE_HOST_PORT)
 }

@@ -25,3 +25,12 @@ CREATE TABLE public.t24 (
 	amount int NULL,
 	CONSTRAINT t24_pk PRIMARY KEY (account_id)
 );
+
+CREATE TABLE public."transaction" (
+	transaction_id varchar NOT NULL,
+	from_account_id varchar NOT NULL,
+	to_account_id varchar NOT NULL,
+	amount int NOT NULL,
+	state varchar NOT NULL,
+	CONSTRAINT transaction_pk PRIMARY KEY (transaction_id)
+);

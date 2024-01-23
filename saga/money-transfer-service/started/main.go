@@ -12,6 +12,12 @@ import (
 )
 
 func main() {
+	c, err := client.Dial(client.Options{})
+	if err != nil {
+		log.Fatalln("Unable to create client", err)
+	}
+	defer c.Close()
+
 	router := gin.Default()
 	router.POST("/api/v1/moneytransfer", func(g *gin.Context) {
 
@@ -23,17 +29,11 @@ func main() {
 			})
 			return
 		}
-
-		c, err := client.Dial(client.Options{})
-		if err != nil {
-			log.Fatalln("Unable to create client", err)
-		}
-		defer c.Close()
-
 		option := client.StartWorkflowOptions{
 			ID:        shared.WORKFLOW + "_" + uuid.New(),
 			TaskQueue: shared.TASKQUEUE,
 		}
+		transferInfo.TransactionId = option.ID
 
 		_, err = c.ExecuteWorkflow(context.Background(), option, app.MoneyTransferWorkflow, transferInfo)
 		if err != nil {
@@ -41,5 +41,5 @@ func main() {
 		}
 	})
 
-	router.Run(shared.MONEY_TRANSFER_SERVICE_URL)
+	router.Run(shared.MONEY_TRANSFER_SERVICE_HOST_PORT)
 }

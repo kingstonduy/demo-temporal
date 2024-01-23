@@ -2,125 +2,243 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	shared "kingstonduy/demo-temporal/saga"
 	"time"
+
+	"go.temporal.io/sdk/activity"
 )
 
 var timeout = time.Second * 1
 
 func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
-	// log := activity.GetLogger(ctx)
-	// log.Info("💡Validate Account activity starts")
+	log := activity.GetLogger(ctx)
+	log.Info("💡Validate Account activity starts")
 
-	// url := fmt.Sprintf("http://localhost:8080/otp/verify/")
-	// var responseType shared.NapasEntity
-	// err := shared.PostApi(url, &input, &responseType)
-	// if err != nil {
-	// 	return errors.New("Cannot validate account")
-	// }
-	// log.Info("💡Validate Account activity ends")
-	// return nil
-	fmt.Println("💡Validate account")
-	time.Sleep(timeout)
+	url := fmt.Sprintf("http://%s/api/v1/account/verify", shared.NAPAS_SERVICE_HOST_PORT)
+	var responseType shared.NapasEntity
+	err := shared.PostApi(url, &shared.ValidateAccountInput{input.FromAccountId}, &responseType)
+	if err != nil {
+		log.Error("🔥Validate Account activity failed")
+		return err
+	}
+
+	log.Info("💡Validate Account activity successfully")
 	return nil
 }
 
 func UpdateStateCreated(ctx context.Context, input shared.TransactionEntity) error {
-	// log := activity.GetLogger(ctx)
-	// log.Info("💡Persist transaction to database starts")
-	// db, err := shared.GetConnection()
-	// if err != nil {
-	// 	return errors.New("Cannot connect to database")
-	// }
+	log := activity.GetLogger(ctx)
+	log.Info("💡Persist transaction to database starts")
+	db, err := shared.GetConnection()
+	if err != nil {
+		log.Error("🔥Cannot connect to database")
+		return err
+	}
 
-	// err = shared.CreateEntity(db, input)
-	// if err != nil {
-	// 	return errors.New("Cannot create transaction")
-	// }
-	// log.Info("💡Update state created successfully")
-	// return nil
+	err = shared.CreateEntity(db, input)
+	if err != nil {
+		log.Error("🔥Cannot create transaction")
+		return err
+	}
 
-	fmt.Println("💡Update State created")
-	time.Sleep(timeout)
+	log.Info("💡Update state created successfully")
 	return nil
 }
 
-func UpdateStateCreateCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback update state created")
-	time.Sleep(timeout)
+func CompensateTransaction(ctx context.Context, input shared.TransactionEntity) error {
+	log := activity.GetLogger(ctx)
+	log.Info("💡Compensate Transaction starts")
+	db, err := shared.GetConnection()
+	if err != nil {
+		log.Error("🔥Cannot connect to database")
+		return err
+	}
+
+	err = shared.UpdateEntity(db, input)
+	if err != nil {
+		log.Error("🔥Cannot create compensate transaction")
+		return err
+	}
+
+	log.Info("💡Compensate Transaction successfully")
 	return nil
 }
 
 func LimitCut(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Limit cut successfully")
-	time.Sleep(timeout)
+	log := activity.GetLogger(ctx)
+	url := fmt.Sprintf("http://%s/api/v1/account/limit", shared.LIMITATION_SERVICE_HOST_PORT)
+	var responseType shared.NapasEntity
+
+	log.Info("Limit cut Account activity starts")
+
+	err := shared.PostApi(url,
+		&shared.SaferRequest{
+			TransactionId: input.TransactionId,
+			AccountId:     input.FromAccountId,
+			Amount:        input.Amount,
+		}, &responseType)
+	if err != nil {
+		log.Error("🔥Limit cut Account activity failed")
+		return err
+	}
+
+	log.Info("💡Limit cut Account activity successfully")
 	return nil
 }
 
 func LimitCutCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback limit cut")
-	time.Sleep(timeout)
+	log := activity.GetLogger(ctx)
+	log.Info("Limit cut compensate activity starts")
+	url := fmt.Sprintf("http://%s/api/v1/account/limit", shared.LIMITATION_SERVICE_HOST_PORT)
+	var responseType shared.NapasEntity
+
+	err := shared.PostApi(url,
+		&shared.SaferRequest{
+			TransactionId: input.TransactionId,
+			AccountId:     input.FromAccountId,
+			Amount:        -input.Amount, // compensate
+		}, &responseType)
+	if err != nil {
+		log.Error("🔥Limit cut compensate activity failed")
+		return err
+	}
+
+	log.Info("💡Limit cut compensate activity successfully")
 	return nil
 }
 
-func UpdateStateLimitCut(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Update State limit cut successfully")
-	time.Sleep(timeout)
-	return nil
-}
+func UpdateStateLimitCut(ctx context.Context, input shared.TransactionEntity) error {
+	log := activity.GetLogger(ctx)
+	log.Info("💡Persist transaction to database starts")
 
-func UpdateStateLimitCutCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback update state limit cut")
-	time.Sleep(timeout)
+	db, err := shared.GetConnection()
+	if err != nil {
+		return errors.New("Cannot connect to database")
+	}
+
+	err = shared.UpdateEntity(db, input)
+	if err != nil {
+		log.Error("🔥Cannot update state")
+		return err
+	}
+	log.Info("💡Update state successfully")
 	return nil
 }
 
 func MoneyCut(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Money cut successfully")
-	time.Sleep(timeout)
+	log := activity.GetLogger(ctx)
+	log.Info("💡Money cut Account activity starts")
+
+	url := fmt.Sprintf("http://%s/api/v1/amount/cut", shared.T24_SERVICE_HOST_PORT)
+	var responseType shared.SaferResponse
+	err := shared.PostApi(url, &shared.SaferRequest{
+		TransactionId: input.TransactionId,
+		AccountId:     input.FromAccountId,
+		Amount:        input.Amount,
+	}, &responseType)
+	if err != nil {
+		log.Error("🔥Money cut Account activity failed")
+		return err
+	}
+
+	log.Info("💡Money cut Account activity successfully")
 	return nil
 }
 
 func MoneyCutCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback money cut")
-	time.Sleep(timeout)
+	log := activity.GetLogger(ctx)
+	log.Info("💡Money cut compensate activity starts")
+
+	url := fmt.Sprintf("http://%s/api/v1/amount/add", shared.T24_SERVICE_HOST_PORT)
+	var responseType shared.SaferResponse
+	input.Amount = -input.Amount
+
+	err := shared.PostApi(url, &shared.SaferRequest{
+		TransactionId: input.TransactionId,
+		AccountId:     input.FromAccountId,
+		Amount:        input.Amount,
+	}, &responseType)
+	if err != nil {
+		log.Error("🔥Money cut compensate activity failed")
+		return err
+	}
+
+	log.Info("💡Money cut compensate activity successfully")
 	return nil
 }
 
-func UpdateStateMoneyCut(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Update State money cut successfully")
-	time.Sleep(timeout)
-	return nil
-}
+func UpdateStateMoneyCut(ctx context.Context, input shared.TransactionEntity) error {
+	log := activity.GetLogger(ctx)
+	log.Info("💡Persist transaction to database starts")
+	db, err := shared.GetConnection()
+	if err != nil {
+		return errors.New("Cannot connect to database")
+	}
 
-func UpdateStateMoneyCutCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback update state money cut")
-	time.Sleep(timeout)
+	err = shared.UpdateEntity(db, input)
+	if err != nil {
+		log.Error("🔥Cannot update state")
+		return err
+	}
+	log.Info("💡Update state successfully")
 	return nil
 }
 
 func UpdateMoney(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Update money successfully")
-	time.Sleep(timeout)
+	log := activity.GetLogger(ctx)
+	log.Info("update money napas cut compensate activity starts")
+
+	url := fmt.Sprintf("http://%s/api/v1/account/update", shared.NAPAS_SERVICE_HOST_PORT)
+	var responseType shared.NapasEntity
+	err := shared.PostApi(url, &shared.SaferRequest{
+		TransactionId: input.TransactionId,
+		AccountId:     input.FromAccountId,
+		Amount:        input.Amount,
+	}, &responseType)
+	if err != nil {
+		log.Error("🔥Limit cut compensate activity failed")
+		return err
+	}
+	log.Info("💡Limit cut compensate activity successfully")
 	return nil
 }
 
 func UpdateMoneyCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback update money")
-	time.Sleep(timeout)
+	log := activity.GetLogger(ctx)
+	log.Info("update money napas cut compensate activity starts")
+
+	url := fmt.Sprintf("http://%s/api/v1/account/update", shared.NAPAS_SERVICE_HOST_PORT)
+	input.Amount = -input.Amount
+	var responseType shared.NapasEntity
+	err := shared.PostApi(url, &shared.SaferRequest{
+		TransactionId: input.TransactionId,
+		AccountId:     input.FromAccountId,
+		Amount:        input.Amount,
+	}, &responseType)
+	if err != nil {
+		log.Error("🔥Limit cut compensate activity failed")
+		return err
+	}
+	log.Info("💡Limit cut compensate activity successfully")
 	return nil
 }
 
-func UpdateStateTransactionCompleted(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Update  state transaction completed")
-	// return errors.New("")
-	time.Sleep(timeout)
-	return nil
-}
+func UpdateStateTransactionCompleted(ctx context.Context, input shared.TransactionEntity) error {
+	log := activity.GetLogger(ctx)
+	log.Info("💡Persist transaction to database starts")
+	db, err := shared.GetConnection()
+	if err != nil {
+		log.Error("🔥Cannot connect to database")
+		return err
+	}
 
-func UpdateStateTransactionCompletedCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	fmt.Println("💡Rollback update state transaction completed")
-	time.Sleep(timeout)
+	err = shared.UpdateEntity(db, input)
+	if err != nil {
+		log.Error("🔥Cannot update state")
+		return err
+	}
+	log.Info("💡Update state  successfully")
 	return nil
 }

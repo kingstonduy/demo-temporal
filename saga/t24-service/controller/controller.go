@@ -3,6 +3,7 @@ package main
 import (
 	shared "kingstonduy/demo-temporal/saga"
 	"kingstonduy/demo-temporal/saga/t24-service/service"
+	"log"
 
 	"net/http"
 
@@ -18,6 +19,7 @@ func HandleError(c *gin.Context, err error) {
 		})
 		return
 	case "Cannot find account":
+		log.Println("🔥🔥🔥🔥🔥🔥")
 		c.IndentedJSON(http.StatusNotFound, shared.SaferResponse{
 			Code:    http.StatusNotFound,
 			Message: "Cannot find account",
@@ -45,6 +47,7 @@ func amountCut(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
+	log.Println("💡Req", req)
 
 	// note the difference
 	req.Amount = -req.Amount
@@ -68,6 +71,7 @@ func amountAdd(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
+	log.Println("💡Req", req)
 
 	err = service.AmountService(req)
 	if err != nil {
@@ -85,5 +89,5 @@ func main() {
 	router := gin.Default()
 	router.POST("/api/v1/amount/cut", amountCut)
 	router.POST("/api/v1/amount/add", amountAdd)
-	router.Run(shared.T24_SERVICE_URL)
+	router.Run(shared.T24_SERVICE_HOST_PORT)
 }

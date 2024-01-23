@@ -25,25 +25,21 @@ func main() {
 	w.RegisterActivity(app.ValidateAccount)
 
 	w.RegisterActivity(app.UpdateStateCreated)
-	w.RegisterActivity(app.UpdateStateCreateCompensate)
 
 	w.RegisterActivity(app.LimitCut)
 	w.RegisterActivity(app.LimitCutCompensate)
 
 	w.RegisterActivity(app.UpdateStateLimitCut)
-	w.RegisterActivity(app.UpdateStateLimitCutCompensate)
 
 	w.RegisterActivity(app.MoneyCut)
 	w.RegisterActivity(app.MoneyCutCompensate)
 
 	w.RegisterActivity(app.UpdateStateMoneyCut)
-	w.RegisterActivity(app.UpdateStateMoneyCutCompensate)
 
 	w.RegisterActivity(app.UpdateMoney)
 	w.RegisterActivity(app.UpdateMoneyCompensate)
 
 	w.RegisterActivity(app.UpdateStateTransactionCompleted)
-	w.RegisterActivity(app.UpdateStateTransactionCompletedCompensate)
 
 	// Start listening to the Task Queue
 	err = w.Run(worker.InterruptCh())

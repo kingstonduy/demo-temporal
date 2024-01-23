@@ -2,105 +2,66 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	shared "kingstonduy/demo-temporal/saga"
 	"time"
-
-	"go.temporal.io/sdk/activity"
 )
 
 var timeout = time.Second * 1
 
 func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
-	log := activity.GetLogger(ctx)
-	log.Info("💡Validate Account activity starts")
+	// log := activity.GetLogger(ctx)
+	// log.Info("💡Validate Account activity starts")
 
-	url := fmt.Sprintf("http://%s/otp/verify/", shared.NAPAS_SERVICE_URL)
-	var responseType shared.NapasEntity
-	err := shared.PostApi(url, &input, &responseType)
-	if err != nil {
-		return errors.New("Cannot validate account")
-	}
-	log.Info("💡Validate Account activity ends")
-	return nil
-	// fmt.Println("💡Validate account")
-	// time.Sleep(timeout)
+	// url := fmt.Sprintf("http://localhost:8080/otp/verify/")
+	// var responseType shared.NapasEntity
+	// err := shared.PostApi(url, &input, &responseType)
+	// if err != nil {
+	// 	return errors.New("Cannot validate account")
+	// }
+	// log.Info("💡Validate Account activity ends")
 	// return nil
+	fmt.Println("💡Validate account")
+	time.Sleep(timeout)
+	return nil
 }
 
 func UpdateStateCreated(ctx context.Context, input shared.TransactionEntity) error {
-	log := activity.GetLogger(ctx)
-	log.Info("💡Persist transaction to database starts")
-	db, err := shared.GetConnection()
-	if err != nil {
-		return errors.New("Cannot connect to database")
-	}
+	// log := activity.GetLogger(ctx)
+	// log.Info("💡Persist transaction to database starts")
+	// db, err := shared.GetConnection()
+	// if err != nil {
+	// 	return errors.New("Cannot connect to database")
+	// }
 
-	err = shared.CreateEntity(db, input)
-	if err != nil {
-		return errors.New("Cannot create transaction")
-	}
-	log.Info("💡Update state created successfully")
-	return nil
-
-	// fmt.Println("💡Update State created")
-	// time.Sleep(timeout)
+	// err = shared.CreateEntity(db, input)
+	// if err != nil {
+	// 	return errors.New("Cannot create transaction")
+	// }
+	// log.Info("💡Update state created successfully")
 	// return nil
+
+	fmt.Println("💡Update State created")
+	time.Sleep(timeout)
+	return nil
 }
 
 func UpdateStateCreateCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	log := activity.GetLogger(ctx)
-	log.Info("💡Rollback update state created starts")
-	db, err := shared.GetConnection()
-	if err != nil {
-		return errors.New("Cannot connect to database")
-	}
-
-	err = shared.DeleteEntity(db, input)
-	if err != nil {
-		return errors.New("Cannot delete transaction")
-	}
-	log.Info("💡Rollback update state created successfully")
+	fmt.Println("💡Rollback update state created")
+	time.Sleep(timeout)
 	return nil
-
-	// fmt.Println("💡Rollback update state created")
-	// time.Sleep(timeout)
-	// return nil
 }
 
 func LimitCut(ctx context.Context, input shared.TransactionInfo) error {
-	log := activity.GetLogger(ctx)
-	log.Info("💡Limit cut activity starts")
-
-	url := fmt.Sprintf(`http://%s/api/v1/account/limit`, shared.LIMITATION_SERVICE_URL)
-	var responseType shared.NapasEntity
-	err := shared.PostApi(url, &input, &responseType)
-	if err != nil {
-		return errors.New("Cannot validate account")
-	}
-	log.Info("💡Validate Account activity ends")
+	fmt.Println("💡Limit cut successfully")
+	time.Sleep(timeout)
 	return nil
-	// fmt.Println("💡Limit cut successfully")
-	// time.Sleep(timeout)
-	// return nil
 }
 
 func LimitCutCompensate(ctx context.Context, input shared.TransactionInfo) error {
-	log := activity.GetLogger(ctx)
-	log.Info("💡Limit cut compensate activity starts")
-
-	url := fmt.Sprintf(`http://%s/api/v1/account/limit`, shared.LIMITATION_SERVICE_URL)
-	var responseType shared.NapasEntity
-	err := shared.PostApi(url, &input, &responseType)
-	if err != nil {
-		return errors.New("Cannot validate account")
-	}
-	log.Info("💡Validate Account activity ends")
+	fmt.Println("💡Rollback limit cut")
+	time.Sleep(timeout)
 	return nil
-	// fmt.Println("💡Rollback limit cut")
-	// time.Sleep(timeout)
-	// return nil
 }
 
 func UpdateStateLimitCut(ctx context.Context, input shared.TransactionInfo) error {
@@ -153,9 +114,9 @@ func UpdateMoneyCompensate(ctx context.Context, input shared.TransactionInfo) er
 
 func UpdateStateTransactionCompleted(ctx context.Context, input shared.TransactionInfo) error {
 	fmt.Println("💡Update  state transaction completed")
-	return errors.New("")
-	// time.Sleep(timeout)
-	// return nil
+	// return errors.New("")
+	time.Sleep(timeout)
+	return nil
 }
 
 func UpdateStateTransactionCompletedCompensate(ctx context.Context, input shared.TransactionInfo) error {

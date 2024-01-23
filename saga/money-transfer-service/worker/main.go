@@ -24,6 +24,7 @@ func main() {
 	// code a automatically register all activities. user reflection
 	w.RegisterActivity(app.ValidateAccount)
 
+	w.RegisterActivity(app.CompensateTransaction)
 	w.RegisterActivity(app.UpdateStateCreated)
 
 	w.RegisterActivity(app.LimitCut)

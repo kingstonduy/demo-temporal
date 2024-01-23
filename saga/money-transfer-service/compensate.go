@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	"time"
 
 	"go.temporal.io/sdk/temporal"
@@ -32,6 +33,7 @@ func (s Compensations) Compensate(ctx workflow.Context, inParallel bool) {
 			}
 		}
 	} else {
+		log.Println("🔥🔥🔥🔥🔥🔥")
 		selector := workflow.NewSelector(ctx)
 		for i := 0; i < len(s.compensations); i++ {
 			execution := workflow.ExecuteActivity(ctx, s.compensations[i], s.arguments[i]...)

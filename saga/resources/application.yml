@@ -1,0 +1,31 @@
+application:
+  name: "saga"
+  context-path: "/is/v1"
+
+money_transfer_service:
+  name: "money-transfer-service"
+  workflow-name: "money-transfer-service"
+  task-queue: "money-transfer-task-queue"
+  port: 7201
+
+limitation_manage_service:
+  name: "limitation-manage-service"
+  workflow-name: "limitation-manage-service"
+  task-queue: "limitation-manage-task-queue"
+  port: 7202
+
+t24_service:
+  name: "t24-service"
+  workflow-name: "t24-service"
+  task-queue: "t24-service-task-queue"
+  port: 7203
+Z
+napas_service:
+  name: "napas-service"
+  workflow-name: "napas-service"
+  task-queue: "napas-service-task-queue"
+  port: 7204
+
+
+
+

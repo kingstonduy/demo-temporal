@@ -35,6 +35,7 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 		log.Fatal("Register account failed, err=", errA)
 		return errA
 	}
+	fmt.Println("💡Register new account, account=", resultA)
 
 	var resultB model.Account
 	errB := futureB.Get(ctx, &resultB)
@@ -42,6 +43,7 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 		log.Fatal("Register SMS failed, err=", errA)
 		return errA
 	}
+	fmt.Println("💡Register sms for account id=", input.Cif1, "account=", resultB)
 
 	var resultC float64
 	errC := futureC.Get(ctx, &resultC)
@@ -50,8 +52,6 @@ func ParallelWorkFlow(ctx workflow.Context, input model.ParallelWorkflowInput) e
 		return errC
 	}
 
-	fmt.Println("💡Register new account, account=", resultA)
-	fmt.Println("💡Register sms for account id=", input.Cif1, "account=", resultB)
 	fmt.Println("💡Get balance for account id=", input.Cif2, "balance=", resultC)
 
 	return nil

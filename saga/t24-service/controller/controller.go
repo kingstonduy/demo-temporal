@@ -47,7 +47,7 @@ func amountCut(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-	log.Println("💡Req", req)
+	log.Printf("💡Request %+v\n", req)
 
 	// note the difference
 	req.Amount = -req.Amount
@@ -71,7 +71,7 @@ func amountAdd(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-	log.Println("💡Req", req)
+	log.Printf("💡Request %+v\n", req)
 
 	err = service.AmountService(req)
 	if err != nil {

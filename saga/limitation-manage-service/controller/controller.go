@@ -3,6 +3,7 @@ package main
 import (
 	shared "kingstonduy/demo-temporal/saga"
 	"kingstonduy/demo-temporal/saga/limitation-manage-service/service"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,6 +45,7 @@ func limit(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
+	log.Printf("💡Request %+v\n", req)
 
 	err = service.LimitService(req)
 	if err != nil {

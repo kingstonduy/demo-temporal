@@ -194,7 +194,7 @@ func UpdateMoney(ctx context.Context, input shared.TransactionInfo) error {
 	var responseType shared.NapasEntity
 	err := shared.PostApi(url, &shared.SaferRequest{
 		TransactionId: input.TransactionId,
-		AccountId:     input.FromAccountId,
+		AccountId:     input.ToAccountId,
 		Amount:        input.Amount,
 	}, &responseType)
 	if err != nil {

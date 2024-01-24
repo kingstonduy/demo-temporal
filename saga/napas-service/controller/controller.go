@@ -16,7 +16,8 @@ func verify(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-	log.Printf("💡req: %+v", req)
+	log.Printf("💡Request %+v\n", req)
+
 	napasEntity, err := service.VerifyAccount(req)
 	if err != nil {
 		HandleError(c, err)
@@ -32,6 +33,7 @@ func update(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
+	log.Printf("💡Request %+v\n", req)
 
 	err = service.UpdateMoney(req)
 	if err != nil {

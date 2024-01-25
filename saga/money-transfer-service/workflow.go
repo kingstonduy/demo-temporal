@@ -12,7 +12,7 @@ func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (e
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 10,
 		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 2,
+			MaximumAttempts: 5,
 			InitialInterval: time.Second * 5},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
@@ -42,23 +42,25 @@ func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (e
 	}
 
 	// ghi vao db trang thai CREATED
-	compensations.AddCompensation(CompensateTransaction, &shared.TransactionEntity{
-		TransactionId: info.TransactionId,
-		FromAccountId: info.FromAccountId,
-		ToAccountId:   info.ToAccountId,
-		Amount:        info.Amount,
-		State:         "CANCELLED",
-	})
 	err = workflow.ExecuteActivity(ctx, UpdateStateCreated, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return err
+	} else {
+		compensations.AddCompensation(CompensateTransaction, &shared.TransactionEntity{
+			TransactionId: info.TransactionId,
+			FromAccountId: info.FromAccountId,
+			ToAccountId:   info.ToAccountId,
+			Amount:        info.Amount,
+			State:         "CANCELLED",
+		})
 	}
 
 	// tru han muc giao dich
-	compensations.AddCompensation(LimitCutCompensate, info)
 	err = workflow.ExecuteActivity(ctx, LimitCut, info).Get(ctx, nil)
 	if err != nil {
 		return err
+	} else {
+		compensations.AddCompensation(LimitCutCompensate, info)
 	}
 
 	// ghi vao db trang thai LIMIT_CUT
@@ -69,10 +71,11 @@ func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (e
 	}
 
 	// goi t24 cat tien tai khoan ocb
-	compensations.AddCompensation(MoneyCutCompensate, info)
 	err = workflow.ExecuteActivity(ctx, MoneyCut, info).Get(ctx, nil)
 	if err != nil {
 		return err
+	} else {
+		compensations.AddCompensation(MoneyCutCompensate, info)
 	}
 
 	// ghi vao db trang thai MONEY_CUT
@@ -83,10 +86,11 @@ func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (e
 	}
 
 	// goi napas ghi co vao tai khoan thu huong
-	compensations.AddCompensation(UpdateMoneyCompensate, info)
 	err = workflow.ExecuteActivity(ctx, UpdateMoney, info).Get(ctx, nil)
 	if err != nil {
 		return err
+	} else {
+		compensations.AddCompensation(UpdateMoneyCompensate, info)
 	}
 
 	// ghi vao db trang thai COMPLETE

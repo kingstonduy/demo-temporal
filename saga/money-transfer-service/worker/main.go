@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	shared "kingstonduy/demo-temporal/saga"
 	app "kingstonduy/demo-temporal/saga/money-transfer-service"
 	"log"
+	"os"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -21,7 +23,6 @@ func main() {
 	w := worker.New(c, shared.TASKQUEUE, worker.Options{})
 	w.RegisterWorkflow(app.MoneyTransferWorkflow)
 
-	// code a automatically register all activities. user reflection
 	w.RegisterActivity(app.ValidateAccount)
 
 	w.RegisterActivity(app.CompensateTransaction)
@@ -43,8 +44,20 @@ func main() {
 	w.RegisterActivity(app.UpdateStateTransactionCompleted)
 
 	// Start listening to the Task Queue
+	go func() {
+		var input string
+		fmt.Scanln(&input)
+		if input == "stop" {
+			w.Stop()
+		}
+		os.Exit(0)
+	}()
+
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
 		log.Fatalln("unable to start Worker", err)
 	}
+
+	// i want that when i type stop in the terminal, the worker will stop
+
 }

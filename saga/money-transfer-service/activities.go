@@ -198,10 +198,10 @@ func UpdateMoney(ctx context.Context, input shared.TransactionInfo) error {
 		Amount:        input.Amount,
 	}, &responseType)
 	if err != nil {
-		log.Error("🔥Limit cut compensate activity failed")
+		log.Error("🔥Update money activity failed")
 		return err
 	}
-	log.Info("💡Limit cut compensate activity successfully")
+	log.Info("💡Update money activity successfully")
 	return nil
 }
 
@@ -218,10 +218,10 @@ func UpdateMoneyCompensate(ctx context.Context, input shared.TransactionInfo) er
 		Amount:        input.Amount,
 	}, &responseType)
 	if err != nil {
-		log.Error("🔥Limit cut compensate activity failed")
+		log.Error("🔥Update money  compensate activity failed")
 		return err
 	}
-	log.Info("💡Limit cut compensate activity successfully")
+	log.Info("💡Update money compensate activity successfully")
 	return nil
 }
 

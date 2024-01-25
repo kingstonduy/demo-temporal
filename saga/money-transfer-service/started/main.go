@@ -6,9 +6,9 @@ import (
 	app "kingstonduy/demo-temporal/saga/money-transfer-service"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
 )
 
@@ -44,7 +44,7 @@ func main() {
 		log.Printf("💡Request %+v\n", transferInfo)
 
 		option := client.StartWorkflowOptions{
-			ID:        shared.WORKFLOW + "_" + uuid.New(),
+			ID:        shared.WORKFLOW + "_" + time.Now().String(),
 			TaskQueue: shared.TASKQUEUE,
 		}
 		transferInfo.TransactionId = option.ID

@@ -18,7 +18,7 @@ func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
 
 	url := fmt.Sprintf("http://%s/api/v1/account/verify", shared.NAPAS_SERVICE_HOST_PORT)
 	var responseType shared.NapasEntity
-	err := shared.PostApi(url, &shared.ValidateAccountInput{input.FromAccountId}, &responseType)
+	err := shared.PostApi(url, &shared.ValidateAccountInput{input.ToAccountId}, &responseType)
 	if err != nil {
 		log.Error("🔥Validate Account activity failed")
 		return err

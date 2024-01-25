@@ -11,7 +11,9 @@ import (
 func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (err error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 10,
-		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 2},
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 2,
+			InitialInterval: time.Second * 5},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
 

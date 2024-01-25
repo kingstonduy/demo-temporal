@@ -18,7 +18,7 @@ func AmountService(input shared.SaferRequest) error {
 	}
 
 	if t24Entity.Amount+input.Amount < 0 {
-		return errors.New("Not enough line of credit")
+		return errors.New("Not enough money")
 	}
 
 	t24Entity.Amount += input.Amount

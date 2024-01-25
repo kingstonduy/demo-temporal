@@ -59,7 +59,6 @@ func PostApi[T any, K any](url string, requestType *T, responseType *K) error {
 		return errors.New(message)
 	}
 
-	fmt.Println("Reponse body in utils", responseType)
 	return nil
 }
 

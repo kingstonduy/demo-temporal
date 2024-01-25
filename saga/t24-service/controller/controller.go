@@ -4,6 +4,7 @@ import (
 	shared "kingstonduy/demo-temporal/saga"
 	"kingstonduy/demo-temporal/saga/t24-service/service"
 	"log"
+	"time"
 
 	"net/http"
 
@@ -57,7 +58,8 @@ func amountCut(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-
+	log.Println("💡OK")
+	time.Sleep(shared.TIMEOUT)
 	c.IndentedJSON(http.StatusOK, shared.SaferResponse{
 		Code:    http.StatusOK,
 		Message: "Success",
@@ -65,6 +67,7 @@ func amountCut(c *gin.Context) {
 }
 
 func amountAdd(c *gin.Context) {
+	time.Sleep(shared.TIMEOUT)
 	var req shared.SaferRequest
 	err := c.BindJSON(&req)
 	if err != nil {
@@ -78,7 +81,6 @@ func amountAdd(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-
 	c.IndentedJSON(http.StatusOK, shared.SaferResponse{
 		Code:    http.StatusOK,
 		Message: "Success",

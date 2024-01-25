@@ -49,8 +49,8 @@ func main() {
 		fmt.Scanln(&input)
 		if input == "stop" {
 			w.Stop()
+			os.Exit(0)
 		}
-		os.Exit(0)
 	}()
 
 	err = w.Run(worker.InterruptCh())

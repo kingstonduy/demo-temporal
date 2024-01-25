@@ -5,6 +5,7 @@ import (
 	"kingstonduy/demo-temporal/saga/limitation-manage-service/service"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,6 +40,7 @@ func HandleError(c *gin.Context, err error) {
 }
 
 func limit(c *gin.Context) {
+	time.Sleep(shared.TIMEOUT)
 	var req shared.SaferRequest
 	err := c.BindJSON(&req)
 	if err != nil {

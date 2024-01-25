@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	shared "kingstonduy/demo-temporal/saga"
-	"time"
 
 	"go.temporal.io/sdk/activity"
 )
-
-var timeout = time.Second * 1
 
 func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
 	log := activity.GetLogger(ctx)
@@ -71,7 +68,7 @@ func LimitCut(ctx context.Context, input shared.TransactionInfo) error {
 	url := fmt.Sprintf("http://%s/api/v1/account/limit", shared.LIMITATION_SERVICE_HOST_PORT)
 	var responseType shared.NapasEntity
 
-	log.Info("Limit cut Account activity starts")
+	log.Info("💡Limit cut Account activity starts")
 
 	err := shared.PostApi(url,
 		&shared.SaferRequest{
@@ -90,7 +87,7 @@ func LimitCut(ctx context.Context, input shared.TransactionInfo) error {
 
 func LimitCutCompensate(ctx context.Context, input shared.TransactionInfo) error {
 	log := activity.GetLogger(ctx)
-	log.Info("Limit cut compensate activity starts")
+	log.Info("💡Limit cut compensate activity starts")
 	url := fmt.Sprintf("http://%s/api/v1/account/limit", shared.LIMITATION_SERVICE_HOST_PORT)
 	var responseType shared.NapasEntity
 
@@ -188,7 +185,7 @@ func UpdateStateMoneyCut(ctx context.Context, input shared.TransactionEntity) er
 
 func UpdateMoney(ctx context.Context, input shared.TransactionInfo) error {
 	log := activity.GetLogger(ctx)
-	log.Info("update money napas cut compensate activity starts")
+	log.Info("💡update money napas cut compensate activity starts")
 
 	url := fmt.Sprintf("http://%s/api/v1/account/update", shared.NAPAS_SERVICE_HOST_PORT)
 	var responseType shared.NapasEntity
@@ -207,7 +204,7 @@ func UpdateMoney(ctx context.Context, input shared.TransactionInfo) error {
 
 func UpdateMoneyCompensate(ctx context.Context, input shared.TransactionInfo) error {
 	log := activity.GetLogger(ctx)
-	log.Info("update money napas cut compensate activity starts")
+	log.Info("💡update money napas cut compensate activity starts")
 
 	url := fmt.Sprintf("http://%s/api/v1/account/update", shared.NAPAS_SERVICE_HOST_PORT)
 	input.Amount = -input.Amount

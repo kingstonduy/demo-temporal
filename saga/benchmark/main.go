@@ -14,25 +14,21 @@ func sth() {
 
 func main() {
 	var input = shared.TransactionInfo{
-		FromAccountId: "123456789",
-		ToAccountId:   "987654321",
-		Amount:        1000000,
+		FromAccountId: "OCB12345",
+		ToAccountId:   "TMCP23456",
+		Amount:        9999999,
 	}
 
 	input.TransactionId = uuid.New()
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 3; i++ {
 		wg.Add(1)
 		go func() {
 			url := fmt.Sprintf("http://localhost:7201/api/v1/moneytransfer")
-			var responseType string
-			err := shared.PostApi(url, &input, &responseType)
-			if err != nil {
-				fmt.Println("Cannot transfer money")
-			} else {
-				fmt.Println("Transfer money successfully")
-			}
+			var responseType shared.SaferResponse
+			_ = shared.PostApi(url, &input, &responseType)
+			fmt.Printf("responseType: %+v\n", responseType)
 			defer wg.Done()
 		}()
 	}

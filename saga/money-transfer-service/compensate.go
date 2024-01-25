@@ -21,7 +21,7 @@ func (s *Compensations) AddCompensation(activity any, parameters ...any) {
 func (s Compensations) Compensate(ctx workflow.Context, inParallel bool) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 10,
-		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 2},
+		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 0},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
 	if !inParallel {

@@ -80,7 +80,7 @@ func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (e
 
 	// ghi vao db trang thai MONEY_CUT
 	transactionEntity.State = "MONEY_CUT"
-	err = workflow.ExecuteActivity(ctx, UpdateStateMoneyCut, info).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, UpdateStateMoneyCut, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return err
 	}

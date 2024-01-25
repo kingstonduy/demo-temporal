@@ -1,5 +1,7 @@
 package shared
 
+import "time"
+
 const TASKQUEUE = "money-transfer-service-task-queue"
 const WORKFLOW = "money-transfer-service-workflow"
 
@@ -14,3 +16,5 @@ const POSTGRES_PORT = 5432
 const POSTGRES_USER = "postgres"
 const POSTGRES_PASSWORD = "changeme"
 const POSTGRES_DBNAME = "postgres"
+
+const TIMEOUT = time.Second * 2

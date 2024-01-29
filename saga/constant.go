@@ -18,3 +18,7 @@ const POSTGRES_PASSWORD = "changeme"
 const POSTGRES_DBNAME = "postgres"
 
 const SERVICE_TIMEOUT = time.Second * 2
+const CLIENT_TIMEOUT = time.Second * 10
+
+const RETRYABLE_ERROR = "1"
+const NONRETRYABLE_ERROR = "0"

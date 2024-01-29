@@ -36,29 +36,23 @@ func GetApi[T any](url string, responseType *T) error {
 func PostApi[T any, K any](url string, requestType *T, responseType *K) error {
 	reqReader, err := convertObjectIntoRequestBody(requestType)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s%s", NONRETRYABLE_ERROR, err.Error())
 	}
 
 	resp, err := http.Post(url, "application/json", reqReader)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s%s", RETRYABLE_ERROR, err.Error())
 	}
 	defer resp.Body.Close()
 
 	convertResponseBodyIntoObject(resp.Body, responseType)
 
 	status := resp.StatusCode
-	if status == 401 {
+	if status != 200 {
 		// API service dead
 		message := fmt.Sprintf("HTTP Error %d: %+v", status, responseType)
-
-		return errors.New(message)
-	} else if status != 200 {
-		// API service dead
-		message := fmt.Sprintf("HTTP Error %d: %+v", status, responseType)
-		return errors.New(message)
+		return fmt.Errorf("%s%s", NONRETRYABLE_ERROR, message)
 	}
-
 	return nil
 }
 

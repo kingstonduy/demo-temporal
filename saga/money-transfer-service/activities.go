@@ -7,6 +7,7 @@ import (
 	shared "kingstonduy/demo-temporal/saga"
 
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/temporal"
 )
 
 func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
@@ -18,7 +19,11 @@ func ValidateAccount(ctx context.Context, input shared.TransactionInfo) error {
 	err := shared.PostApi(url, &shared.ValidateAccountInput{input.ToAccountId}, &responseType)
 	if err != nil {
 		log.Error("🔥Validate Account activity failed")
-		return err
+		if shared.IsRetryableError(err) {
+			return err
+		} else {
+			return temporal.NewNonRetryableApplicationError("non retry", shared.NONRETRYABLE_ERROR, err, nil)
+		}
 	}
 
 	log.Info("💡Validate Account activity successfully")

@@ -11,7 +11,7 @@ import (
 )
 
 func verify(c *gin.Context) {
-	time.Sleep(shared.TIMEOUT)
+	time.Sleep(shared.SERVICE_TIMEOUT)
 	var req shared.ValidateAccountInput
 	err := c.BindJSON(&req)
 	if err != nil {
@@ -29,7 +29,7 @@ func verify(c *gin.Context) {
 }
 
 func update(c *gin.Context) {
-	time.Sleep(shared.TIMEOUT)
+	time.Sleep(shared.SERVICE_TIMEOUT)
 	var req shared.SaferRequest
 	err := c.BindJSON(&req)
 	if err != nil {

@@ -17,4 +17,4 @@ const POSTGRES_USER = "postgres"
 const POSTGRES_PASSWORD = "changeme"
 const POSTGRES_DBNAME = "postgres"
 
-const TIMEOUT = time.Second * 2
+const SERVICE_TIMEOUT = time.Second * 2

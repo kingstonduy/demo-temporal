@@ -53,6 +53,17 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to execute %s workflow\n, error=%s", option.ID, err)
 		}
+
+		// err = we.Get(context.Background(), nil)
+		// if err != nil {
+		// 	g.JSON(http.StatusBadRequest, gin.H{
+		// 		"message": err.Error(),
+		// 	})
+		// } else {
+		// 	g.JSON(http.StatusAccepted, gin.H{
+		// 		"message": "ok",
+		// 	})
+		// }
 	})
 
 	router.Run(shared.MONEY_TRANSFER_SERVICE_HOST_PORT)

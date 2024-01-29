@@ -59,7 +59,7 @@ func amountCut(c *gin.Context) {
 		return
 	}
 	log.Println("💡OK")
-	time.Sleep(shared.SERVICE_TIMEOUT)
+	time.Sleep(shared.TIMEOUT)
 	c.IndentedJSON(http.StatusOK, shared.SaferResponse{
 		Code:    http.StatusOK,
 		Message: "Success",
@@ -67,7 +67,7 @@ func amountCut(c *gin.Context) {
 }
 
 func amountAdd(c *gin.Context) {
-	time.Sleep(shared.SERVICE_TIMEOUT)
+	time.Sleep(shared.TIMEOUT)
 	var req shared.SaferRequest
 	err := c.BindJSON(&req)
 	if err != nil {

@@ -17,8 +17,12 @@ const POSTGRES_USER = "postgres"
 const POSTGRES_PASSWORD = "changeme"
 const POSTGRES_DBNAME = "postgres"
 
+<<<<<<< HEAD
 const SERVICE_TIMEOUT = time.Second * 2
 const CLIENT_TIMEOUT = time.Second * 10
 
 const RETRYABLE_ERROR = "1"
 const NONRETRYABLE_ERROR = "0"
+=======
+const TIMEOUT = time.Second * 2
+>>>>>>> parent of 5bf56e9 (refactor service sleep)

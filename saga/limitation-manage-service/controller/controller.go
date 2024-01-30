@@ -40,7 +40,7 @@ func HandleError(c *gin.Context, err error) {
 }
 
 func limit(c *gin.Context) {
-	time.Sleep(shared.TIMEOUT)
+	time.Sleep(shared.SERVICE_TIMEOUT)
 	var req shared.SaferRequest
 	err := c.BindJSON(&req)
 	if err != nil {

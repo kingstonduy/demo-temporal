@@ -83,7 +83,11 @@ func LimitCut(ctx context.Context, input shared.TransactionInfo) error {
 		}, &responseType)
 	if err != nil {
 		log.Error("🔥Limit cut Account activity failed")
-		return err
+		if shared.IsRetryableError(err) {
+			return err
+		} else {
+			return temporal.NewNonRetryableApplicationError("non retry", shared.NONRETRYABLE_ERROR, err, nil)
+		}
 	}
 
 	log.Info("💡Limit cut Account activity successfully")
@@ -142,7 +146,11 @@ func MoneyCut(ctx context.Context, input shared.TransactionInfo) error {
 	}, &responseType)
 	if err != nil {
 		log.Error("🔥Money cut Account activity failed")
-		return err
+		if shared.IsRetryableError(err) {
+			return err
+		} else {
+			return temporal.NewNonRetryableApplicationError("non retry", shared.NONRETRYABLE_ERROR, err, nil)
+		}
 	}
 
 	log.Info("💡Money cut Account activity successfully")

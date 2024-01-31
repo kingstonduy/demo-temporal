@@ -76,6 +76,7 @@ func amountAdd(c *gin.Context) {
 	}
 	log.Printf("💡Request %+v\n", req)
 
+	req.Amount = -req.Amount
 	err = service.AmountService(req)
 	if err != nil {
 		HandleError(c, err)

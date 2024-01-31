@@ -3,9 +3,13 @@ package main
 import (
 	"fmt"
 	shared "kingstonduy/demo-temporal/saga"
-	app "kingstonduy/demo-temporal/saga/money-transfer-service"
+	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
+	"kingstonduy/demo-temporal/saga/money-transfer-service/repository"
+	"kingstonduy/demo-temporal/saga/money-transfer-service/temporal"
+	"kingstonduy/demo-temporal/saga/money-transfer-service/usecase"
 	"log"
 	"os"
+	"time"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -19,29 +23,39 @@ func main() {
 	}
 	defer c.Close()
 
+	app := bootstrap.App()
+
+	usecase := usecase.NewMoneyTransferUsecase(repository.NewTransactionRepository(app.Postgres),
+		app.Env.NapasUrl, app.Env.T24Url, app.Env.LimitServiceUrl, time.Duration(app.Env.ContextTimeout))
+
+	workflow := temporal.MoneyTransferWorkflow{
+		Usecase: usecase,
+	}
+
 	// This worker hosts both Workflow and Activity functions
 	w := worker.New(c, shared.TASKQUEUE, worker.Options{})
-	w.RegisterWorkflow(app.MoneyTransferWorkflow)
 
-	w.RegisterActivity(app.ValidateAccount)
+	w.RegisterWorkflow(workflow.NewMoneyTransferWorkflow)
 
-	w.RegisterActivity(app.CompensateTransaction)
-	w.RegisterActivity(app.UpdateStateCreated)
+	w.RegisterActivity(usecase.ValidateAccount)
 
-	w.RegisterActivity(app.LimitCut)
-	w.RegisterActivity(app.LimitCutCompensate)
+	w.RegisterActivity(usecase.CompensateTransaction)
+	w.RegisterActivity(usecase.UpdateStateCreated)
 
-	w.RegisterActivity(app.UpdateStateLimitCut)
+	w.RegisterActivity(usecase.LimitCut)
+	w.RegisterActivity(usecase.LimitCutCompensate)
 
-	w.RegisterActivity(app.MoneyCut)
-	w.RegisterActivity(app.MoneyCutCompensate)
+	w.RegisterActivity(usecase.UpdateStateLimitCut)
 
-	w.RegisterActivity(app.UpdateStateMoneyCut)
+	w.RegisterActivity(usecase.MoneyCut)
+	w.RegisterActivity(usecase.MoneyCutCompensate)
 
-	w.RegisterActivity(app.UpdateMoney)
-	w.RegisterActivity(app.UpdateMoneyCompensate)
+	w.RegisterActivity(usecase.UpdateStateMoneyCut)
 
-	w.RegisterActivity(app.UpdateStateTransactionCompleted)
+	w.RegisterActivity(usecase.UpdateMoney)
+	w.RegisterActivity(usecase.UpdateMoneyCompensate)
+
+	w.RegisterActivity(usecase.UpdateStateTransactionCompleted)
 
 	// Start listening to the Task Queue
 	go func() {

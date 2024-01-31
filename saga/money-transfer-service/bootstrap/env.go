@@ -22,8 +22,15 @@ type Env struct {
 }
 
 func NewEnv() *Env {
+	// cwd, err := os.Getwd()
+	// if err != nil {
+	// 	log.Fatal("Can't get current working directory: ", err)
+	// }
+
+	// path := filepath.Join(cwd, ".env")
+
 	env := Env{}
-	viper.SetConfigFile(".env")
+	viper.SetConfigFile("/home/kingstonduy/working/repos/go-repos/demo-temporal/saga/money-transfer-service/.env")
 
 	err := viper.ReadInConfig()
 	if err != nil {

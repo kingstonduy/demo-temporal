@@ -18,5 +18,5 @@ func NewMoneyTransferRouter(env *bootstrap.Env, timeout time.Duration, db *gorm.
 		MoneyTransferUsecase: usecase.NewMoneyTransferUsecase(ur, env.NapasUrl, env.T24Url, env.LimitServiceUrl, timeout),
 		Env:                  env,
 	}
-	group.POST("/signup", sc.MoneyTransfer(c))
+	group.POST("/moneytransfer", sc.MoneyTransfer(c))
 }

@@ -1,6 +1,7 @@
-package cmd
+package main
 
 import (
+	"fmt"
 	"kingstonduy/demo-temporal/saga/money-transfer-service/api/route"
 	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
 	"log"
@@ -14,6 +15,8 @@ func main() {
 	app := bootstrap.App()
 
 	env := app.Env
+
+	fmt.Printf("%+v\n", env)
 
 	db := app.Postgres
 
@@ -31,5 +34,6 @@ func main() {
 
 	route.Setup(env, timeout, db, gin, c)
 
-	gin.Run(env.ServerHost)
+	go gin.Run(env.ServerHost)
+	fmt.Println("HIHI")
 }

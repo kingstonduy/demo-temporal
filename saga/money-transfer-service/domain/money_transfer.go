@@ -2,6 +2,9 @@ package domain
 
 import "context"
 
+type MoneyTransferWorkflowInput struct {
+}
+
 type MoneyTransferUsecase interface {
 	ValidateAccount(ctx context.Context, input TransactionInfo) error
 	UpdateStateCreated(ctx context.Context, input TransactionEntity) error

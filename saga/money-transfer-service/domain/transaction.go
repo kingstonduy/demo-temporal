@@ -17,9 +17,13 @@ type TransactionEntity struct {
 	State         string `gorm:"column:state"`
 }
 
+func (*TransactionEntity) TableName() string {
+	return "transaction"
+}
+
 type TransactionRepository interface {
-	Create(c context.Context, transaction *TransactionInfo) error
-	Fetch(c context.Context) ([]TransactionInfo, error)
-	GetByEmail(c context.Context, email string) (TransactionInfo, error)
-	GetByID(c context.Context, id string) (TransactionInfo, error)
+	Create(c context.Context, transaction TransactionEntity) error
+	DeleteById(c context.Context, transaction TransactionEntity) error
+	Update(c context.Context, transaction TransactionEntity) error
+	GetByID(c context.Context, id string) (TransactionEntity, error)
 }

@@ -3,9 +3,11 @@ package cmd
 import (
 	"kingstonduy/demo-temporal/saga/money-transfer-service/api/route"
 	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.temporal.io/sdk/client"
 )
 
 func main() {
@@ -21,7 +23,13 @@ func main() {
 
 	gin := gin.Default()
 
-	route.Setup(env, timeout, db, gin)
+	c, err := client.Dial(client.Options{})
+	if err != nil {
+		log.Fatalln("Unable to create client", err)
+	}
+	defer c.Close()
+
+	route.Setup(env, timeout, db, gin, c)
 
 	gin.Run(env.ServerHost)
 }

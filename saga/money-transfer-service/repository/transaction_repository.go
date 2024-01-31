@@ -2,37 +2,55 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"kingstonduy/demo-temporal/saga/money-transfer-service/domain"
 
 	"gorm.io/gorm"
 )
 
 type transactionRepository struct {
-	database *gorm.DB
+	db *gorm.DB
 }
 
 func NewTransactionRepository(db *gorm.DB) domain.TransactionRepository {
 	return &transactionRepository{
-		database: db,
+		db: db,
 	}
 }
 
 // Create implements domain.TransactionRepository.
-func (*transactionRepository) Create(c context.Context, transaction *domain.TransactionInfo) error {
-	panic("unimplemented")
+func (repo *transactionRepository) Create(c context.Context, transaction domain.TransactionEntity) error {
+	result := repo.db.Create(transaction)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
-// Fetch implements domain.TransactionRepository.
-func (*transactionRepository) Fetch(c context.Context) ([]domain.TransactionInfo, error) {
-	panic("unimplemented")
-}
-
-// GetByEmail implements domain.TransactionRepository.
-func (*transactionRepository) GetByEmail(c context.Context, email string) (domain.TransactionInfo, error) {
-	panic("unimplemented")
+// Delete implements domain.TransactionRepository.
+func (repo *transactionRepository) DeleteById(c context.Context, transaction domain.TransactionEntity) error {
+	result := repo.db.Delete(transaction)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 // GetByID implements domain.TransactionRepository.
-func (*transactionRepository) GetByID(c context.Context, id string) (domain.TransactionInfo, error) {
-	panic("unimplemented")
+func (repo *transactionRepository) GetByID(c context.Context, id string) (domain.TransactionEntity, error) {
+	var result domain.TransactionEntity
+	err := repo.db.Where("account_id = ?", id).First(&result).Error
+	if err != nil {
+		return result, errors.New("Cannot find account")
+	}
+	return result, nil
+}
+
+// Update implements domain.TransactionRepository.
+func (repo *transactionRepository) Update(c context.Context, transaction domain.TransactionEntity) error {
+	result := repo.db.Save(transaction)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }

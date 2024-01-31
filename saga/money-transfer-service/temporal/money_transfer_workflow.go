@@ -1,64 +1,14 @@
-package controller
+package temporal
 
 import (
-	"context"
 	shared "kingstonduy/demo-temporal/saga"
-	app "kingstonduy/demo-temporal/saga/money-transfer-service"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/domain"
-	"log"
-	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-type MoneyTransferController struct {
-	MoneyTransferUsecase domain.MoneyTransferUsecase
-	Env                  *bootstrap.Env
-}
-
-func (lc *MoneyTransferController) MoneyTransfer(c client.Client) gin.HandlerFunc {
-	fn := func(g *gin.Context) {
-		var transferInfo domain.TransactionInfo
-		err := g.BindJSON(&transferInfo)
-		if err != nil {
-			g.JSON(http.StatusBadRequest, gin.H{
-				"message": "Invalid request",
-			})
-			return
-		}
-
-		log.Printf("💡Request %+v\n", transferInfo)
-
-		option := client.StartWorkflowOptions{
-			ID:        lc.Env.Workflow + "_" + time.Now().String(),
-			TaskQueue: lc.Env.TaskQueue,
-		}
-		transferInfo.TransactionId = option.ID
-		_, err = c.ExecuteWorkflow(context.Background(), option, app.MoneyTransferWorkflow, transferInfo)
-		if err != nil {
-			log.Fatalf("Unable to execute %s workflow\n, error=%s", option.ID, err)
-		}
-
-		// err = we.Get(context.Background(), nil)
-		// if err != nil {
-		// 	g.JSON(http.StatusBadRequest, gin.H{
-		// 		"message": err.Error(),
-		// 	})
-		// } else {
-		// 	g.JSON(http.StatusAccepted, gin.H{
-		// 		"message": "ok",
-		// 	})
-		// }
-	}
-	return gin.HandlerFunc(fn)
-}
-
-func MoneyTransferWorkflow(ctx workflow.Context, usecase1 domain.MoneyTransferUsecase, info shared.TransactionInfo) (err error) {
+func MoneyTransferWorkflow(ctx workflow.Context, info shared.TransactionInfo) (err error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 10,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -78,7 +28,7 @@ func MoneyTransferWorkflow(ctx workflow.Context, usecase1 domain.MoneyTransferUs
 	}()
 
 	// just read the database, dont need to compensate
-	err = workflow.ExecuteActivity(ctx, usecase1.ValidateAccount, info).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, usecase.ValidateAccount, info).Get(ctx, nil)
 	if err != nil {
 		return err
 	}

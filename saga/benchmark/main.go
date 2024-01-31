@@ -16,13 +16,13 @@ func main() {
 	var input = shared.TransactionInfo{
 		FromAccountId: "OCB12345",
 		ToAccountId:   "TMCP23456",
-		Amount:        9999999,
+		Amount:        0,
 	}
 
 	input.TransactionId = uuid.New()
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func() {
 			url := fmt.Sprintf("http://localhost:7201/api/v1/moneytransfer")

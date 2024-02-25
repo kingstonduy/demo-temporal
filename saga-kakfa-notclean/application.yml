@@ -1,0 +1,35 @@
+money-transfer:
+  host: localhost
+  port: 7201
+
+limit:
+  host: localhost
+  port: 7202
+
+t24:
+  host: localhost
+  port: 7203
+
+napas:
+  host: localhost
+  port: 7204
+
+database:
+  postgres:
+    host: localhost
+    port: 5432
+    dbname: postgres
+    password: changeme
+
+temporal:
+  host: localhost
+  port: 7233
+  taskqueue: money-transfer-service-task-queue
+  workflow: MoneyTransferService
+
+kafka:
+  index: producer_index
+  bootstrap-server:
+    host: localhost
+    port: 9092
+

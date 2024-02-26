@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"kingstonduy/demo-temporal/traditionalway-getting-block/model"
+	"traditionalway-getting-block/model"
 
 	"go.temporal.io/sdk/activity"
 )

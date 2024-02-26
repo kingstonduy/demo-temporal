@@ -1,9 +1,9 @@
 package main
 
 import (
-	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/t24-service/service"
 	"log"
+	shared "saga"
+	"saga/t24-service/service"
 	"time"
 
 	"net/http"

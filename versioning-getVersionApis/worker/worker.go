@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	versioning_getVersionApis "kingstonduy/demo-temporal/versioning-getVersionApis"
-	"kingstonduy/demo-temporal/versioning-getVersionApis/shared"
+	versioning_getVersionApis "versioning-getVersionApis"
+	"versioning-getVersionApis/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

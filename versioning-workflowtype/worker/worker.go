@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	versioning_workflowtype "kingstonduy/demo-temporal/versioning-workflowtype"
-	"kingstonduy/demo-temporal/versioning-workflowtype/shared"
+	versioning_workflowtype "versioning-workflowtype"
+	"versioning-workflowtype/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

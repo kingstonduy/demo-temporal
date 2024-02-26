@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	shared "kingstonduy/demo-temporal/saga"
+	shared "saga"
 	"sync"
 
 	"github.com/pborman/uuid"

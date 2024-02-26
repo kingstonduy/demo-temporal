@@ -1,10 +1,10 @@
 package main
 
 import (
-	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/napas-service/service"
 	"log"
 	"net/http"
+	shared "saga"
+	"saga/napas-service/service"
 	"time"
 
 	"github.com/gin-gonic/gin"

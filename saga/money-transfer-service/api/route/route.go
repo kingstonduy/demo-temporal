@@ -1,7 +1,7 @@
 package route
 
 import (
-	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
+	"saga/money-transfer-service/bootstrap"
 	"time"
 
 	"github.com/gin-gonic/gin"

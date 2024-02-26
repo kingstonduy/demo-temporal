@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	shared "kingstonduy/demo-temporal/saga"
+	shared "saga"
 )
 
 func VerifyAccount(input shared.ValidateAccountInput) (shared.NapasEntity, error) {

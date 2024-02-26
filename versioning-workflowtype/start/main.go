@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	versioning_workflowtype "kingstonduy/demo-temporal/versioning-workflowtype"
-	"kingstonduy/demo-temporal/versioning-workflowtype/shared"
 	"log"
+	versioning_workflowtype "versioning-workflowtype"
+	"versioning-workflowtype/shared"
 
 	"github.com/pborman/uuid"
 

@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	shared "kingstonduy/demo-temporal/saga"
+	shared "saga"
 )
 
 func AmountService(input shared.SaferRequest) error {

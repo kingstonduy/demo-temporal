@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"kingstonduy/demo-temporal/signal"
-	"kingstonduy/demo-temporal/signal/shared"
+	"signal"
+	"signal/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	model "kingstonduy/demo-temporal/duplicate-console/model"
+	model "duplicate-console/model"
 
 	"go.temporal.io/sdk/activity"
 )

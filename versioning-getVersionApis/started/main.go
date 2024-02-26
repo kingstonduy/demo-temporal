@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	versioning_getVersionApis "kingstonduy/demo-temporal/versioning-getVersionApis"
-	"kingstonduy/demo-temporal/versioning-getVersionApis/shared"
+	versioning_getVersionApis "versioning-getVersionApis"
+	"versioning-getVersionApis/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	goroutines_activities "kingstonduy/demo-temporal/goroutines-activities"
-	"kingstonduy/demo-temporal/goroutines-activities/shared"
+	goroutines_activities "goroutines-activities"
+	"goroutines-activities/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"

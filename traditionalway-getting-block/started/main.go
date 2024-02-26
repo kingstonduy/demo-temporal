@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	traditionalway_getting_block "kingstonduy/demo-temporal/traditionalway-getting-block"
-	"kingstonduy/demo-temporal/traditionalway-getting-block/shared"
+	traditionalway_getting_block "traditionalway-getting-block"
+	"traditionalway-getting-block/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"

@@ -1,7 +1,7 @@
 package service
 
 import (
-	shared "kingstonduy/demo-temporal/saga"
+	shared "saga"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

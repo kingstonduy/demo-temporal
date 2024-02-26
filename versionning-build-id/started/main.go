@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"kingstonduy/demo-temporal/versionning-build-id/shared"
+	"versionning-build-id/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"

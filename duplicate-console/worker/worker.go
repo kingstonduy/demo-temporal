@@ -1,10 +1,10 @@
 package main
 
 import (
+	"duplicate-console/shared"
 	"log"
 
-	"kingstonduy/demo-temporal/async/shared"
-	duplicate_console "kingstonduy/demo-temporal/duplicate-console"
+	duplicate_console "duplicate-console"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

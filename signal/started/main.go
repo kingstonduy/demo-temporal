@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"kingstonduy/demo-temporal/signal"
-	"kingstonduy/demo-temporal/signal/shared"
+	"signal"
+	"signal/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"

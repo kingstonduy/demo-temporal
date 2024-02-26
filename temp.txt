@@ -1,0 +1,4 @@
+./confluent-6.1.0/bin/kafka-topics --create --partitions 1 --replication-factor 1 --topic validate_account_channel --bootstrap-server localhost:9092
+./confluent-6.1.0/bin/kafka-topics --create --partitions 1 --replication-factor 1 --topic limit_cut_channel --bootstrap-server localhost:9092
+./confluent-6.1.0/bin/kafka-topics --create --partitions 1 --replication-factor 1 --topic money_transfer_reply_channel --bootstrap-server localhost:9092
+./confluent-6.1.0/bin/kafka-topics --create --partitions 1 --replication-factor 1 --topic update_balance_channel --bootstrap-server localhost:9092

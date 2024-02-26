@@ -28,6 +28,7 @@ type Config struct {
 			Host     string `mapstructure:"host"`
 			Port     string `mapstructure:"port"`
 			DBName   string `mapstructure:"dbname"`
+			User     string `mapstructure:"user"`
 			Password string `mapstructure:"password"`
 		} `mapstructure:"postgres"`
 	} `mapstructure:"database"`

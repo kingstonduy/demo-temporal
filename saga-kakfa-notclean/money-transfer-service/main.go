@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"kingstonduy/demo-temporal/saga-kakfa-notclean/money-transfer-service/config"
+	model "kingstonduy/demo-temporal/saga-kakfa-notclean/money-transfer-service/shared"
 	"log"
+	"net/http"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gin-gonic/gin"
@@ -13,39 +15,43 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-type WorkflowInfo struct {
-	ID    string `json:"ID`
-	RunID string `json:"RunID`
-}
-
 // request, response to client. starts a workflow then wait for the workflow to finish
-func Produce(c client.Client) gin.HandlerFunc {
+func Handler(c client.Client) gin.HandlerFunc {
 	fn := func(ctx *gin.Context) {
+		var clientReq model.CLientRequest
+		err := ctx.BindJSON(&clientReq)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, error.Error(err))
+		}
+
+		var workflowInput = &model.WorkflowInput{
+			TransactionID: uuid.New(),
+			FromAccount:   clientReq.FromAccount,
+			ToAccount:     clientReq.ToAccount,
+			Amount:        clientReq.Amount,
+		}
+
 		options := client.StartWorkflowOptions{
-			ID:        config.GetConfig().Temporal.Workflow + "-" + uuid.New(),
+			ID:        config.GetConfig().Temporal.Workflow + "-" + workflowInput.TransactionID,
 			TaskQueue: config.GetConfig().Temporal.TaskQueue,
 		}
 
-		we, err := c.ExecuteWorkflow(context.Background(), options, config.GetConfig().Temporal.Workflow)
+		we, err := c.ExecuteWorkflow(context.Background(), options, config.GetConfig().Temporal.Workflow, workflowInput)
 		if err != nil {
 			ctx.JSON(500, error.Error(err))
 			return
 		}
 
-		err = we.Get(ctx, nil)
+		var clientResponse model.ClientResponse
+		err = we.Get(ctx, &clientResponse)
 		if err != nil {
 			ctx.JSON(500, error.Error(err))
 			return
 		}
 
-		ctx.JSON(200, "Success")
+		ctx.JSON(200, clientResponse)
 	}
 	return fn
-}
-
-func ParseWorkflowInfo(jsonStr string, info *WorkflowInfo) error {
-	err := json.Unmarshal([]byte(jsonStr), &info)
-	return err
 }
 
 // consume from kafka then signal the workflow to continue
@@ -66,15 +72,15 @@ func Consume(cl client.Client, bootstrapServer string, topic string) {
 	for {
 		msg, err := c.ReadMessage(-1)
 		if err == nil {
-			var workflowInfo WorkflowInfo
-			err := json.Unmarshal([]byte(string(msg.Value)), &workflowInfo)
+			var saferResponse model.SaferResponse
+			err := json.Unmarshal([]byte(string(msg.Value)), &saferResponse)
 			if err != nil {
 				log.Println(err)
 				return
 			}
 
-			signalName := workflowInfo.ID
-			err = cl.SignalWorkflow(context.Background(), workflowInfo.ID, workflowInfo.RunID, signalName, nil)
+			signalName := saferResponse.WorkflowID + "-" + saferResponse.RunID
+			err = cl.SignalWorkflow(context.Background(), saferResponse.WorkflowID, saferResponse.RunID, signalName, nil)
 			if err != nil {
 				log.Println(err)
 				return
@@ -92,6 +98,23 @@ func Consume(cl client.Client, bootstrapServer string, topic string) {
 func main() {
 	config := config.GetConfig()
 
-	fmt.Printf("Config: %+v", config)
+	c, err := client.Dial(client.Options{
+		HostPort: fmt.Sprintf("%s:%s", config.Temporal.Host, config.Temporal.Port),
+	})
+	if err != nil {
+		log.Fatalln("Unable to create client", err)
+	}
+	defer c.Close()
 
+	g := gin.Default()
+	publicRouter := g.Group("/api/v1")
+	publicRouter.POST("/moneytransfer", Handler(c))
+
+	go func() {
+		Consume(c,
+			fmt.Sprintf("%s:%s", config.Kafka.BootstrapServer.Host, config.Kafka.BootstrapServer.Port),
+			"money_transfer_reply_channel")
+	}()
+
+	g.Run(fmt.Sprintf("%s:%s", config.MoneyTransfer.Host, config.MoneyTransfer.Port))
 }

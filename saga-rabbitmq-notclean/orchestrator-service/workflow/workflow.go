@@ -1,15 +1,15 @@
 package workflow
 
 import (
-	"log"
-	model "saga-kafka-notclean/money-transfer-service/shared"
+	"fmt"
+	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 	"time"
 
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (output model.CLientRequest, err error) {
+func MoneyTransferWorklow(ctx workflow.Context, input model.WorkflowInput) (output model.WorkflowOutput, err error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 10,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -27,48 +27,72 @@ func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (outp
 		}
 	}()
 
+	fmt.Println("💡Workflow input %+v\n", input)
+
+	var napasAccountRes model.NapasAccountResponse
+	err = workflow.ExecuteActivity(ctx, ValidateAccount, input).Get(ctx, &napasAccountRes)
+	if err != nil {
+		return output, err
+	}
+
+	var transactionEntity = model.TransactionEntity{
+		TransactionID: input.TransactionID,
+		FromAccountID: input.FromAccountID,
+		ToAccountID:   input.ToAccountID,
+		ToAccountName: napasAccountRes.AccountName,
+		Message:       fmt.Sprintf("Transfering money from %s to %s", input.FromAccountID, input.ToAccountID),
+		Amount:        input.Amount,
+		Timestamp:     time.Now().String(),
+		State:         "",
+	}
+
+	output = model.WorkflowOutput{
+		TransactionID: input.TransactionID,
+		FromAccountID: input.FromAccountID,
+		ToAccountID:   input.ToAccountID,
+		ToAccountName: napasAccountRes.AccountName,
+		Amount:        input.Amount,
+		Message:       fmt.Sprintf("Transfering money from %s to %s", input.FromAccountID, input.ToAccountID),
+		Timestamp:     time.Now().String(),
+	}
+
+	err = workflow.ExecuteActivity(ctx, UpdateStateCreated, transactionEntity).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+	compensations.AddCompensation(CompensateTransaction, transactionEntity)
+
+	err = workflow.ExecuteActivity(ctx, LimitCut, input).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+	compensations.AddCompensation(LimitCutCompensate, input)
+	err = workflow.ExecuteActivity(ctx, UpdateStateLimitCut, transactionEntity).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+
+	err = workflow.ExecuteActivity(ctx, MoneyCut, input).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+	compensations.AddCompensation(MoneyCutCompensate, input)
+	err = workflow.ExecuteActivity(ctx, UpdateStateMoneyCut, transactionEntity).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+
+	err = workflow.ExecuteActivity(ctx, UpdateMoney, input).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+	compensations.AddCompensation(UpdateMoneyCompensate, input)
+
+	err = workflow.ExecuteActivity(ctx, UpdateStateTransactionCompleted, transactionEntity).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+
 	return output, err
 
-}
-
-type Compensations struct {
-	compensations []any
-	arguments     [][]any
-}
-
-func (s *Compensations) AddCompensation(activity any, parameters ...any) {
-	s.compensations = append(s.compensations, activity)
-	s.arguments = append(s.arguments, parameters)
-}
-
-func (s Compensations) Compensate(ctx workflow.Context, inParallel bool) {
-	options := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Second * 10,
-		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 0},
-	}
-	ctx = workflow.WithActivityOptions(ctx, options)
-	if !inParallel {
-		// Compensate in Last-In-First-Out order, to undo in the reverse order that activies were applied.
-		for i := len(s.compensations) - 1; i >= 0; i-- {
-			errCompensation := workflow.ExecuteActivity(ctx, s.compensations[i], s.arguments[i]...).Get(ctx, nil)
-			if errCompensation != nil {
-				workflow.GetLogger(ctx).Error("Executing compensation failed", "Error", errCompensation)
-			}
-		}
-	} else {
-		log.Println("🔥🔥🔥🔥🔥🔥")
-		selector := workflow.NewSelector(ctx)
-		for i := 0; i < len(s.compensations); i++ {
-			execution := workflow.ExecuteActivity(ctx, s.compensations[i], s.arguments[i]...)
-			selector.AddFuture(execution, func(f workflow.Future) {
-				if errCompensation := f.Get(ctx, nil); errCompensation != nil {
-					workflow.GetLogger(ctx).Error("Executing compensation failed", "Error", errCompensation)
-				}
-			})
-		}
-		for range s.compensations {
-			selector.Select(ctx)
-		}
-
-	}
 }

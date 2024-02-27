@@ -3,9 +3,9 @@ module saga-rabbitmq-notclean
 go 1.20
 
 require (
-	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/pborman/uuid v1.2.1
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	go.temporal.io/sdk v1.25.1

@@ -2,14 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"saga-kafka-notclean/money-transfer-service/config"
-	model "saga-kafka-notclean/money-transfer-service/shared"
+	"saga-rabbitmq-notclean/money-transfer-service/config"
+	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gin-gonic/gin"
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
@@ -26,8 +24,8 @@ func Handler(c client.Client) gin.HandlerFunc {
 
 		var workflowInput = &model.WorkflowInput{
 			TransactionID: uuid.New(),
-			FromAccount:   clientReq.FromAccount,
-			ToAccount:     clientReq.ToAccount,
+			FromAccountID: clientReq.FromAccountID,
+			ToAccountID:   clientReq.ToAccountID,
 			Amount:        clientReq.Amount,
 		}
 
@@ -54,47 +52,6 @@ func Handler(c client.Client) gin.HandlerFunc {
 	return fn
 }
 
-// consume from kafka then signal the workflow to continue
-func Consume(cl client.Client, bootstrapServer string, topic string) {
-
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": bootstrapServer,
-		"group.id":          "myGroup",
-		"auto.offset.reset": "latest",
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	c.SubscribeTopics([]string{topic}, nil)
-
-	for {
-		msg, err := c.ReadMessage(-1)
-		if err == nil {
-			var saferResponse model.SaferResponse
-			err := json.Unmarshal([]byte(string(msg.Value)), &saferResponse)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			signalName := saferResponse.WorkflowID + "-" + saferResponse.RunID
-			err = cl.SignalWorkflow(context.Background(), saferResponse.WorkflowID, saferResponse.RunID, signalName, nil)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-		} else {
-			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
-			break
-		}
-	}
-
-	c.Close()
-}
-
 func main() {
 	config := config.GetConfig()
 
@@ -109,12 +66,6 @@ func main() {
 	g := gin.Default()
 	publicRouter := g.Group("/api/v1")
 	publicRouter.POST("/moneytransfer", Handler(c))
-
-	go func() {
-		Consume(c,
-			fmt.Sprintf("%s:%s", config.Kafka.BootstrapServer.Host, config.Kafka.BootstrapServer.Port),
-			"money_transfer_reply_channel")
-	}()
 
 	g.Run(fmt.Sprintf("%s:%s", config.MoneyTransfer.Host, config.MoneyTransfer.Port))
 }

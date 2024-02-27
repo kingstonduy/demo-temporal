@@ -1,42 +1,55 @@
 package model
 
 type CLientRequest struct {
-	FromAccount string `json:"FromAccount"`
-	ToAccount   string `json:"ToAccount"`
-	Amount      int64  `json:"Amount"`
-}
-
-type WorkflowInput struct {
-	TransactionID string
-	FromAccount   string
-	ToAccount     string
-	Amount        int64
+	FromAccountID string `json:"FromAccountID"`
+	ToAccountID   string `json:"ToAccountID"`
+	Amount        int64  `json:"Amount"`
 }
 
 type ClientResponse struct {
 	TransactionID   string `json:"TransactionID"`
-	FromAccountId   string `json:"FromAccountId"`
+	FromAccountID   string `json:"FromAccountID"`
 	FromAccountName string `json:"FromAccountName"`
-	ToAccountId     string `json:"ToAccountId"`
+	ToAccountID     string `json:"ToAccountID"`
 	ToAccountName   string `json:"ToAccountName"`
 	Message         string `json:"Message"`
 	Amount          int64  `json:"Amount"`
 	Timestamp       string `json:"Timestamp"`
 }
 
+type WorkflowInput struct {
+	TransactionID string
+	FromAccountID string
+	ToAccountID   string
+	Amount        int64
+}
+
+type WorkflowOutput struct {
+	TransactionID   string
+	FromAccountID   string
+	FromAccountName string
+	ToAccountID     string
+	ToAccountName   string
+	Message         string
+	Amount          int64
+	Timestamp       string
+}
+
 type SaferRequest struct {
-	WorkflowID string `json:"WorkflowID"`
-	RunID      string `json:"RunID"`
-	AccountID  string `json:"AccountID"`
-	Amount     int64  `json:"Amount"`
+	WorkflowID    string `json:"WorkflowID"`
+	RunID         string `json:"RunID"`
+	TransactionID string `json:"TransactionID"`
+	FromAccountID string `json:"FromAccountID"`
+	ToAccountID   string `json:"ToAccountID"`
+	Amount        int64  `json:"Amount"`
 }
 
 type SaferResponse struct {
 	WorkflowID string `json:"WorkflowID"`
 	RunID      string `json:"RunID"`
 	Code       int    `json:"Code"`
-	Status     string `json:"Status"`
-	Message    string `json:"Message"`
+	// Status     string `json:"Status"`
+	Message string `json:"Message"`
 }
 
 type NapasAccountResponse struct {
@@ -45,15 +58,15 @@ type NapasAccountResponse struct {
 }
 
 type TransactionEntity struct {
-	TransactionId   string `gorm:"primaryKey";column:transaction_id`
-	FromAccountId   string `gorm:"column:from_account_id"`
-	FromAccountName string `gorm:"column:from_account_name"`
-	ToAccountId     string `gorm:"column:to_account_id"`
-	ToAccountName   string `gorm:"column:to_account_name"`
-	Message         string `gorm:"column:message"`
-	Amount          int64  `gorm:"column:amount;type:bigint""`
-	Timestamp       string `gorm:"column:timestamp"`
-	State           string `gorm:"column:state"`
+	TransactionID string `gorm:"primaryKey";column:transaction_ID`
+	FromAccountID string `gorm:"column:from_account_ID"`
+	// FromAccountName string `gorm:"column:from_account_name"`
+	ToAccountID   string `gorm:"column:to_account_ID"`
+	ToAccountName string `gorm:"column:to_account_name"`
+	Message       string `gorm:"column:message"`
+	Amount        int64  `gorm:"column:amount;type:bigint""`
+	Timestamp     string `gorm:"column:timestamp"`
+	State         string `gorm:"column:state"`
 }
 
 func (*TransactionEntity) TableName() string {
@@ -61,7 +74,7 @@ func (*TransactionEntity) TableName() string {
 }
 
 type T24Entity struct {
-	AccountId string `gorm:"primaryKey";column:account_id`
+	AccountID string `gorm:"primaryKey";column:account_ID`
 	Amount    int64  `gorm:"column:amount;type:bigint""`
 }
 
@@ -70,7 +83,7 @@ func (T24Entity) TableName() string {
 }
 
 type AccountLimitEntity struct {
-	AccountId string `gorm:"primaryKey";column:account_id`
+	AccountID string `gorm:"primaryKey";column:account_ID`
 	Amount    int64  `gorm:"column:amount;type:bigint""`
 }
 
@@ -79,7 +92,7 @@ func (AccountLimitEntity) TableName() string {
 }
 
 type NapasEntity struct {
-	AccountId   string `gorm:"primaryKey";column:account_id`
+	AccountID   string `gorm:"primaryKey";column:account_ID`
 	AccountName string `gorm:"column:account_name"`
 	Amount      int64  `gorm:"column:amount;type:bigint""`
 }

@@ -19,7 +19,10 @@ func Handler(c client.Client) gin.HandlerFunc {
 		var clientReq model.CLientRequest
 		err := ctx.BindJSON(&clientReq)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, error.Error(err))
+			ctx.JSON(http.StatusBadRequest, model.SaferResponse{
+				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			})
 		}
 
 		var workflowInput = &model.WorkflowInput{
@@ -36,14 +39,24 @@ func Handler(c client.Client) gin.HandlerFunc {
 
 		we, err := c.ExecuteWorkflow(context.Background(), options, config.GetConfig().Temporal.Workflow, workflowInput)
 		if err != nil {
-			ctx.JSON(500, error.Error(err))
+			ctx.JSON(500, model.SaferResponse{
+				WorkflowID: workflowInput.TransactionID,
+				RunID:      we.GetID(),
+				Code:       http.StatusInternalServerError,
+				Message:    err.Error(),
+			})
 			return
 		}
 
 		var clientResponse model.ClientResponse
 		err = we.Get(ctx, &clientResponse)
 		if err != nil {
-			ctx.JSON(500, error.Error(err))
+			ctx.JSON(500, model.SaferResponse{
+				WorkflowID: workflowInput.TransactionID,
+				RunID:      we.GetID(),
+				Code:       http.StatusInternalServerError,
+				Message:    err.Error(),
+			})
 			return
 		}
 

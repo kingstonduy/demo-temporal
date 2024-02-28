@@ -9,11 +9,11 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func MoneyTransferWorklow(ctx workflow.Context, input model.WorkflowInput) (output model.WorkflowOutput, err error) {
+func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (output model.WorkflowOutput, err error) {
 	options := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Second * 10,
+		StartToCloseTimeout: time.Second * 5,
 		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 5,
+			MaximumAttempts: 0,
 			InitialInterval: time.Second * 5},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
@@ -27,10 +27,19 @@ func MoneyTransferWorklow(ctx workflow.Context, input model.WorkflowInput) (outp
 		}
 	}()
 
-	fmt.Println("💡Workflow input %+v\n", input)
+	fmt.Printf("💡Workflow input %+v\n", input)
+
+	saferRequest := model.SaferRequest{
+		WorkflowID:    workflow.GetInfo(ctx).WorkflowExecution.ID,
+		RunID:         workflow.GetInfo(ctx).WorkflowExecution.RunID,
+		TransactionID: input.TransactionID,
+		FromAccountID: input.FromAccountID,
+		ToAccountID:   input.ToAccountID,
+		Amount:        input.Amount,
+	}
 
 	var napasAccountRes model.NapasAccountResponse
-	err = workflow.ExecuteActivity(ctx, ValidateAccount, input).Get(ctx, &napasAccountRes)
+	err = workflow.ExecuteActivity(ctx, ValidateAccount, saferRequest).Get(ctx, &napasAccountRes)
 	if err != nil {
 		return output, err
 	}
@@ -53,8 +62,10 @@ func MoneyTransferWorklow(ctx workflow.Context, input model.WorkflowInput) (outp
 		ToAccountName: napasAccountRes.AccountName,
 		Amount:        input.Amount,
 		Message:       fmt.Sprintf("Transfering money from %s to %s", input.FromAccountID, input.ToAccountID),
-		Timestamp:     time.Now().String(),
+		Timestamp:     time.Now().Format("2006-01-02 15:04:05"),
 	}
+
+	fmt.Printf("💡Output: %+v\n", output)
 
 	err = workflow.ExecuteActivity(ctx, UpdateStateCreated, transactionEntity).Get(ctx, nil)
 	if err != nil {
@@ -62,31 +73,31 @@ func MoneyTransferWorklow(ctx workflow.Context, input model.WorkflowInput) (outp
 	}
 	compensations.AddCompensation(CompensateTransaction, transactionEntity)
 
-	err = workflow.ExecuteActivity(ctx, LimitCut, input).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, LimitCut, saferRequest).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
-	compensations.AddCompensation(LimitCutCompensate, input)
+	compensations.AddCompensation(LimitCutCompensate, saferRequest)
 	err = workflow.ExecuteActivity(ctx, UpdateStateLimitCut, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
 
-	err = workflow.ExecuteActivity(ctx, MoneyCut, input).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, MoneyCut, saferRequest).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
-	compensations.AddCompensation(MoneyCutCompensate, input)
+	compensations.AddCompensation(MoneyCutCompensate, saferRequest)
 	err = workflow.ExecuteActivity(ctx, UpdateStateMoneyCut, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
 
-	err = workflow.ExecuteActivity(ctx, UpdateMoney, input).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, UpdateMoney, saferRequest).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
-	compensations.AddCompensation(UpdateMoneyCompensate, input)
+	compensations.AddCompensation(UpdateMoneyCompensate, saferRequest)
 
 	err = workflow.ExecuteActivity(ctx, UpdateStateTransactionCompleted, transactionEntity).Get(ctx, nil)
 	if err != nil {

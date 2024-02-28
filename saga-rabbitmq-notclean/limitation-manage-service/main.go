@@ -40,7 +40,7 @@ func update(s string) model.SaferResponse {
 	}
 
 	var accountLimitEntity model.AccountLimitEntity
-	err = db.Where("account_id = ?", req.ToAccountID).First(&accountLimitEntity).Error
+	err = db.Where("account_id = ?", req.FromAccountID).First(&accountLimitEntity).Error
 	if err != nil {
 		return model.SaferResponse{
 			WorkflowID: req.WorkflowID,

@@ -5,80 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"saga-rabbitmq-notclean/money-transfer-service/config"
 	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 
-	"net/http"
 	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
-
-func update(s string) model.SaferResponse {
-	var req model.SaferRequest
-
-	err := json.Unmarshal([]byte(s), &req)
-	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusBadRequest,
-			Message:    err.Error(),
-		}
-	}
-	log.Printf("💡Request %+v\n", req)
-
-	db, err := config.GetDB()
-	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
-	}
-
-	var t24Entity model.T24Entity
-	err = db.Where("account_id = ?", req.FromAccountID).First(&t24Entity).Error
-	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
-	}
-
-	t24Entity.Amount += req.Amount
-
-	fmt.Printf("💡T24Entity %+v\n", t24Entity)
-	if t24Entity.Amount < 0 {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusBadRequest,
-			Message:    "Not enough money",
-		}
-	}
-
-	err = db.Save(&t24Entity).Error
-	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
-	}
-
-	return model.SaferResponse{
-		WorkflowID: req.WorkflowID,
-		RunID:      req.RunID,
-		Code:       http.StatusOK,
-		Message:    "update record napas success",
-	}
-}
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -135,15 +70,33 @@ func ConsumeAndPublish(topic string, url string) {
 		go func() {
 			defer wg.Done()
 			for d := range msgs {
-				log.Printf(" [*] Awaiting RPC requests")
-				n := string(d.Body)
-				failOnError(err, "Failed to convert body to integer")
+				// convert json string to struct
+				var saferRequest model.SaferRequest
+				err := json.Unmarshal(d.Body, &saferRequest)
+				failOnError(err, "Failed to convert body to struct")
 
-				var response model.SaferResponse
-				response = update(n)
+				var response = model.SaferResponse{
+					WorkflowID: saferRequest.WorkflowID,
+					RunID:      saferRequest.RunID,
+					Code:       http.StatusOK,
+					Status:     "OK",
+					Message:    "Success",
+				}
+
+				if topic == config.GetConfig().NapasAccount.Queue {
+					napasResponse := model.NapasAccountResponse{
+						AccountID:   saferRequest.ToAccountID,
+						AccountName: "Nguyen Van A",
+					}
+					jsonBytes, _ := json.Marshal(napasResponse)
+					response.Message = string(jsonBytes)
+				}
+
+				fmt.Printf("💡Consume request from topic %s, message: %+v\n", topic, saferRequest)
 
 				// convert struct to json string
 				responseStr, _ := json.Marshal(response)
+				fmt.Printf("💡Reply response from topic %s, message: %+v\n", topic, saferRequest)
 
 				err = ch.PublishWithContext(ctx,
 					"",        // exchange
@@ -171,5 +124,28 @@ func main() {
 		config.GetConfig().RabbitMQ.Host,
 		config.GetConfig().RabbitMQ.Port,
 	)
-	ConsumeAndPublish(config.GetConfig().T24.Queue, RabbitMQ_URL)
+
+	wg := sync.WaitGroup{}
+	wg.Add(4)
+	go func() {
+		defer wg.Done()
+		ConsumeAndPublish(config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
+	}()
+
+	go func() {
+		defer wg.Done()
+		ConsumeAndPublish(config.GetConfig().NapasAccount.Queue, RabbitMQ_URL)
+	}()
+
+	go func() {
+		defer wg.Done()
+		ConsumeAndPublish(config.GetConfig().Limit.Queue, RabbitMQ_URL)
+	}()
+
+	go func() {
+		defer wg.Done()
+		ConsumeAndPublish(config.GetConfig().T24.Queue, RabbitMQ_URL)
+	}()
+
+	wg.Wait()
 }

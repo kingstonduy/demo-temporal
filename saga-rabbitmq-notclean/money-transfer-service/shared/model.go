@@ -7,14 +7,14 @@ type CLientRequest struct {
 }
 
 type ClientResponse struct {
-	TransactionID   string `json:"TransactionID"`
-	FromAccountID   string `json:"FromAccountID"`
-	FromAccountName string `json:"FromAccountName"`
-	ToAccountID     string `json:"ToAccountID"`
-	ToAccountName   string `json:"ToAccountName"`
-	Message         string `json:"Message"`
-	Amount          int64  `json:"Amount"`
-	Timestamp       string `json:"Timestamp"`
+	TransactionID string `json:"TransactionID"`
+	FromAccountID string `json:"FromAccountID"`
+	// FromAccountName string `json:"FromAccountName"`
+	ToAccountID   string `json:"ToAccountID"`
+	ToAccountName string `json:"ToAccountName"`
+	Message       string `json:"Message"`
+	Amount        int64  `json:"Amount"`
+	Timestamp     string `json:"Timestamp"`
 }
 
 type WorkflowInput struct {
@@ -48,8 +48,8 @@ type SaferResponse struct {
 	WorkflowID string `json:"WorkflowID"`
 	RunID      string `json:"RunID"`
 	Code       int    `json:"Code"`
-	// Status     string `json:"Status"`
-	Message string `json:"Message"`
+	Status     string `json:"Status"`
+	Message    string `json:"Message"`
 }
 
 type NapasAccountResponse struct {
@@ -58,10 +58,10 @@ type NapasAccountResponse struct {
 }
 
 type TransactionEntity struct {
-	TransactionID string `gorm:"primaryKey";column:transaction_ID`
-	FromAccountID string `gorm:"column:from_account_ID"`
+	TransactionID string `gorm:"primaryKey";column:transaction_id`
+	FromAccountID string `gorm:"column:from_account_id"`
 	// FromAccountName string `gorm:"column:from_account_name"`
-	ToAccountID   string `gorm:"column:to_account_ID"`
+	ToAccountID   string `gorm:"column:to_account_id"`
 	ToAccountName string `gorm:"column:to_account_name"`
 	Message       string `gorm:"column:message"`
 	Amount        int64  `gorm:"column:amount;type:bigint""`
@@ -74,7 +74,7 @@ func (*TransactionEntity) TableName() string {
 }
 
 type T24Entity struct {
-	AccountID string `gorm:"primaryKey";column:account_ID`
+	AccountID string `gorm:"primaryKey";column:account_id`
 	Amount    int64  `gorm:"column:amount;type:bigint""`
 }
 
@@ -83,7 +83,7 @@ func (T24Entity) TableName() string {
 }
 
 type AccountLimitEntity struct {
-	AccountID string `gorm:"primaryKey";column:account_ID`
+	AccountID string `gorm:"primaryKey";column:account_id`
 	Amount    int64  `gorm:"column:amount;type:bigint""`
 }
 
@@ -92,7 +92,7 @@ func (AccountLimitEntity) TableName() string {
 }
 
 type NapasEntity struct {
-	AccountID   string `gorm:"primaryKey";column:account_ID`
+	AccountID   string `gorm:"primaryKey";column:account_id`
 	AccountName string `gorm:"column:account_name"`
 	Amount      int64  `gorm:"column:amount;type:bigint""`
 }

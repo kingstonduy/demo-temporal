@@ -22,7 +22,7 @@ func main() {
 	// This worker hosts both Workflow and Activity functions
 	w := worker.New(c, config.GetConfig().Temporal.TaskQueue, worker.Options{})
 
-	w.RegisterWorkflow(workflow.MoneyTransferWorklow)
+	w.RegisterWorkflow(workflow.MoneyTransferService)
 
 	w.RegisterActivity(workflow.ValidateAccount)
 

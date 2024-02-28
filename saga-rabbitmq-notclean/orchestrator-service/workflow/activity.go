@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"saga-rabbitmq-notclean/money-transfer-service/config"
 	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/pborman/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -32,16 +33,18 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func RequestAndReply(topic string, url string, message string) (res string, err error) {
+func RequestAndReply[T any, K any](req T, res *K, topic string, url string) error {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		log.Panicf("%s: Failed to connect to RabbitMQ", err)
+		return err
 	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Panicf("%s: Failed to open a channel", err)
+		return err
 	}
 	defer ch.Close()
 
@@ -68,12 +71,19 @@ func RequestAndReply(topic string, url string, message string) (res string, err 
 	)
 	if err != nil {
 		log.Panicf("%s: Failed to register a consumer", err)
+		return err
 	}
 
-	corrId := uuid.New().String()
+	corrId := uuid.New()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	inputString, err := json.Marshal(req)
+	if err != nil {
+		log.Panicf("Failed to convert object to JSON: %s", err)
+		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
+	}
 
 	err = ch.PublishWithContext(ctx,
 		"",    // exchange
@@ -84,32 +94,43 @@ func RequestAndReply(topic string, url string, message string) (res string, err 
 			ContentType:   "text/plain",
 			CorrelationId: corrId,
 			ReplyTo:       q.Name,
-			Body:          []byte(message),
+			Body:          []byte(inputString),
 		})
 	if err != nil {
 		log.Panicf("%s: Failed to publish a message", err)
+		return err
 	}
 
 	for d := range msgs {
 		if corrId == d.CorrelationId {
-			res = string(d.Body)
+			err = json.Unmarshal(d.Body, res)
+			if err != nil {
+				log.Panicf("%s: Failed to convert json to  object", err)
+				return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
+			}
 			break
 		}
 	}
 
-	return
+	return nil
 }
 
-func ValidateAccount(ctx context.Context, input model.WorkflowInput) (output model.NapasAccountResponse, err error) {
+func ValidateAccount(ctx context.Context, input model.SaferRequest) (output model.NapasAccountResponse, err error) {
 	log := activity.GetLogger(ctx)
 	log.Info("💡Validate Account activity starts")
 
-	inputJson, err := json.Marshal(input)
-
-	resJson, err := RequestAndReply(config.GetConfig().NapasAccount.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &output)
-
+	var response model.SaferResponse
+	err = RequestAndReply(input, &response, config.GetConfig().NapasAccount.Queue, RabbitMQ_URL)
 	if err != nil {
+		return output, err
+	}
+
+	err = json.Unmarshal([]byte(response.Message), &output)
+	if err != nil {
+		return output, temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
+	}
+
+	if response.Code != 200 {
 		return output, temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
 
@@ -117,16 +138,19 @@ func ValidateAccount(ctx context.Context, input model.WorkflowInput) (output mod
 	return
 }
 
-func LimitCut(ctx context.Context, input model.WorkflowInput) error {
+func LimitCut(ctx context.Context, input model.SaferRequest) error {
 	log := activity.GetLogger(ctx)
 	log.Info("💡Limit cut Account activity starts")
 
-	inputJson, err := json.Marshal(input)
-	var responseType model.SaferResponse
+	// fix this
 
-	resJson, err := RequestAndReply(config.GetConfig().Limit.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &responseType)
+	input.Amount = -int64(math.Abs(float64(input.Amount)))
+	var response model.SaferResponse
+	err := RequestAndReply(input, &response, config.GetConfig().Limit.Queue, RabbitMQ_URL)
 	if err != nil {
+		return err
+	}
+	if response.Code != 200 {
 		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
 
@@ -134,87 +158,87 @@ func LimitCut(ctx context.Context, input model.WorkflowInput) error {
 	return nil
 }
 
-func LimitCutCompensate(ctx context.Context, input model.WorkflowInput) error {
+func LimitCutCompensate(ctx context.Context, input model.SaferRequest) error {
 	log := activity.GetLogger(ctx)
 	log.Info("💡Limit cut compensate activity starts")
 
-	inputJson, err := json.Marshal(input)
-	var responseType model.SaferResponse
-
-	resJson, err := RequestAndReply(config.GetConfig().Limit.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &responseType)
+	input.Amount = int64(math.Abs(float64(input.Amount)))
+	var response model.SaferResponse
+	err := RequestAndReply(input, &response, config.GetConfig().Limit.Queue, RabbitMQ_URL)
 	if err != nil {
+		return err
+	}
+	if response.Code != 200 {
 		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
-
 	log.Info("💡Limit cut compensate activity successfully")
 	return nil
 }
 
-func MoneyCut(ctx context.Context, input model.WorkflowInput) error {
+func MoneyCut(ctx context.Context, input model.SaferRequest) error {
 	log := activity.GetLogger(ctx)
 	log.Info("💡Money cut Account activity starts")
 
-	inputJson, err := json.Marshal(input)
-	var responseType model.SaferResponse
-
-	resJson, err := RequestAndReply(config.GetConfig().T24.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &responseType)
+	input.Amount = -int64(math.Abs(float64(input.Amount)))
+	var response model.SaferResponse
+	err := RequestAndReply(input, &response, config.GetConfig().T24.Queue, RabbitMQ_URL)
 	if err != nil {
+		return err
+	}
+	if response.Code != 200 {
 		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
-
 	log.Info("💡Money cut Account activity successfully")
 	return nil
 }
 
-func MoneyCutCompensate(ctx context.Context, input model.WorkflowInput) error {
+func MoneyCutCompensate(ctx context.Context, input model.SaferRequest) error {
 	log := activity.GetLogger(ctx)
 	log.Info("💡Money cut compensate activity starts")
 
-	inputJson, err := json.Marshal(input)
-	var responseType model.SaferResponse
-
-	resJson, err := RequestAndReply(config.GetConfig().T24.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &responseType)
+	input.Amount = int64(math.Abs(float64(input.Amount)))
+	var response model.SaferResponse
+	err := RequestAndReply(input, &response, config.GetConfig().T24.Queue, RabbitMQ_URL)
 	if err != nil {
+		return err
+	}
+	if response.Code != 200 {
 		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
-
 	log.Info("💡Money cut compensate activity successfully")
 	return nil
 }
 
-func UpdateMoney(ctx context.Context, input model.WorkflowInput) error {
+func UpdateMoney(ctx context.Context, input model.SaferRequest) error {
 	log := activity.GetLogger(ctx)
 	log.Info("💡Add money to receiver activity starts")
 
-	inputJson, err := json.Marshal(input)
-	var responseType model.SaferResponse
-
-	resJson, err := RequestAndReply(config.GetConfig().NapasMoney.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &responseType)
+	input.Amount = int64(math.Abs(float64(input.Amount)))
+	var response model.SaferResponse
+	err := RequestAndReply(input, &response, config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
 	if err != nil {
+		return err
+	}
+	if response.Code != 200 {
 		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
-
 	log.Info("💡Add money to receiver activity successfully")
 	return nil
 }
 
-func UpdateMoneyCompensate(ctx context.Context, input model.WorkflowInput) error {
+func UpdateMoneyCompensate(ctx context.Context, input model.SaferRequest) error {
 	log := activity.GetLogger(ctx)
 	log.Info("💡update money napas cut compensate activity starts")
 
-	inputJson, err := json.Marshal(input)
-	var responseType model.SaferResponse
-
-	resJson, err := RequestAndReply(config.GetConfig().NapasMoney.Queue, RabbitMQ_URL, string(inputJson))
-	err = json.Unmarshal([]byte(resJson), &responseType)
+	input.Amount = -int64(math.Abs(float64(input.Amount)))
+	var response model.SaferResponse
+	err := RequestAndReply(input, &response, config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
 	if err != nil {
+		return err
+	}
+	if response.Code != 200 {
 		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
-
 	log.Info("💡Update money compensate activity successfully")
 	return nil
 }

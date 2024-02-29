@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/domain"
+	"saga/money-transfer-service/domain"
 
 	"gorm.io/gorm"
 )

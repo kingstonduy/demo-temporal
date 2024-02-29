@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"kingstonduy/demo-temporal/traditionalway-getting-block/model"
+	"traditionalway-getting-block/model"
 
 	"github.com/gin-gonic/gin"
 )

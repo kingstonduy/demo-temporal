@@ -2,11 +2,11 @@ package controller
 
 import (
 	"context"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/domain"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/temporal"
 	"log"
 	"net/http"
+	"saga/money-transfer-service/bootstrap"
+	"saga/money-transfer-service/domain"
+	"saga/money-transfer-service/temporal"
 	"time"
 
 	"github.com/gin-gonic/gin"

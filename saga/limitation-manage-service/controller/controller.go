@@ -1,10 +1,10 @@
 package main
 
 import (
-	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/limitation-manage-service/service"
 	"log"
 	"net/http"
+	shared "saga"
+	"saga/limitation-manage-service/service"
 	"time"
 
 	"github.com/gin-gonic/gin"

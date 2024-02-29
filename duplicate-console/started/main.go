@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	duplicate_console "kingstonduy/demo-temporal/duplicate-console"
-	"kingstonduy/demo-temporal/duplicate-console/model"
-	"kingstonduy/demo-temporal/duplicate-console/shared"
+	duplicate_console "duplicate-console"
+	"duplicate-console/model"
+	"duplicate-console/shared"
 
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"

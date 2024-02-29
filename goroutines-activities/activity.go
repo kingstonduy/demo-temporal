@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"kingstonduy/demo-temporal/goroutines-activities/model"
+	"goroutines-activities/model"
 
 	"go.temporal.io/sdk/activity"
 )

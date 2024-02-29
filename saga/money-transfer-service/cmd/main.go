@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/api/route"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
 	"log"
+	"saga/money-transfer-service/api/route"
+	"saga/money-transfer-service/bootstrap"
 	"time"
 
 	"github.com/gin-gonic/gin"

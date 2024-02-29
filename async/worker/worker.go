@@ -1,8 +1,8 @@
 package main
 
 import (
-	"kingstonduy/demo-temporal/async"
-	"kingstonduy/demo-temporal/async/shared"
+	"async"
+	"async/shared"
 	"log"
 
 	"go.temporal.io/sdk/client"

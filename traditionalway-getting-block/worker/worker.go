@@ -1,9 +1,9 @@
 package main
 
 import (
-	traditionalway_getting_block "kingstonduy/demo-temporal/traditionalway-getting-block"
-	"kingstonduy/demo-temporal/traditionalway-getting-block/shared"
 	"log"
+	traditionalway_getting_block "traditionalway-getting-block"
+	"traditionalway-getting-block/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

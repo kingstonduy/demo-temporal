@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/repository"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/temporal"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/usecase"
 	"log"
 	"os"
+	shared "saga"
+	"saga/money-transfer-service/bootstrap"
+	"saga/money-transfer-service/repository"
+	"saga/money-transfer-service/temporal"
+	"saga/money-transfer-service/usecase"
 	"time"
 
 	"go.temporal.io/sdk/client"

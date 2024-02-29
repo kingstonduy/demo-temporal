@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"kingstonduy/demo-temporal/goroutines-activities/model"
+	"goroutines-activities/model"
 
 	"github.com/gin-gonic/gin"
 )

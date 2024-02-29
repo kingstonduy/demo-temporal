@@ -1,9 +1,9 @@
 package main
 
 import (
+	"async"
+	"async/shared"
 	"context"
-	"kingstonduy/demo-temporal/async"
-	"kingstonduy/demo-temporal/async/shared"
 
 	"log"
 

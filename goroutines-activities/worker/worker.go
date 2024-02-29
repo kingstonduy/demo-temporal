@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	goroutines_activities "kingstonduy/demo-temporal/goroutines-activities"
-	"kingstonduy/demo-temporal/goroutines-activities/shared"
+	goroutines_activities "goroutines-activities"
+	"goroutines-activities/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

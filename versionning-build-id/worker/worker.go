@@ -4,8 +4,8 @@ import (
 	"log"
 	"sync"
 
-	versionning_build_id "kingstonduy/demo-temporal/versionning-build-id"
-	"kingstonduy/demo-temporal/versionning-build-id/shared"
+	versionning_build_id "versionning-build-id"
+	"versionning-build-id/shared"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"async/model"
 	"crypto/rand"
 	"io"
-	"kingstonduy/demo-temporal/async/model"
 	"log"
 	"net/http"
 	"os"

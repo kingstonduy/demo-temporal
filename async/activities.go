@@ -1,10 +1,10 @@
 package async
 
 import (
+	"async/model"
 	"context"
 	"errors"
 	"fmt"
-	"kingstonduy/demo-temporal/async/model"
 	"time"
 
 	"go.temporal.io/sdk/activity"

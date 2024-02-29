@@ -1,10 +1,10 @@
 package route
 
 import (
-	"kingstonduy/demo-temporal/saga/money-transfer-service/api/controller"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/bootstrap"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/repository"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/usecase"
+	"saga/money-transfer-service/api/controller"
+	"saga/money-transfer-service/bootstrap"
+	"saga/money-transfer-service/repository"
+	"saga/money-transfer-service/usecase"
 	"time"
 
 	"github.com/gin-gonic/gin"

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"kingstonduy/demo-temporal/duplicate-console/model"
+	"duplicate-console/model"
 
 	"github.com/gin-gonic/gin"
 )

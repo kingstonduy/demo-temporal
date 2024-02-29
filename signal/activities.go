@@ -3,7 +3,7 @@ package signal
 import (
 	"context"
 
-	"kingstonduy/demo-temporal/signal/services"
+	"signal/services"
 )
 
 func BlockingActivity(ctx context.Context, input int) error {

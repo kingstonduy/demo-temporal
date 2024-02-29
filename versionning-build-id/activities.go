@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"kingstonduy/demo-temporal/versionning-build-id/services"
+	"versionning-build-id/services"
 )
 
 func GetInformation(ctx context.Context) (string, error) {

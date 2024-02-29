@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 	"fmt"
-	shared "kingstonduy/demo-temporal/saga"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/domain"
-	"kingstonduy/demo-temporal/saga/money-transfer-service/internal/httputil"
+	shared "saga"
+	"saga/money-transfer-service/domain"
+	"saga/money-transfer-service/internal/httputil"
 	"time"
 
 	"go.temporal.io/sdk/activity"

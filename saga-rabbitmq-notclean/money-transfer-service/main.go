@@ -5,24 +5,26 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"saga-rabbitmq-notclean/money-transfer-service/config"
+	"saga-rabbitmq-notclean/config"
 	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
 )
 
 // request, response to client. starts a workflow then wait for the workflow to finish
-func Handler(c client.Client) gin.HandlerFunc {
-	fn := func(ctx *gin.Context) {
+func Handler(c client.Client) fiber.Handler {
+	fn := func(ctx *fiber.Ctx) error {
 		var clientReq model.CLientRequest
-		err := ctx.BindJSON(&clientReq)
+		err := ctx.BodyParser(&clientReq)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, model.SaferResponse{
-				Code:    http.StatusInternalServerError,
+			log.Println(err.Error())
+			ctx.Status(fiber.StatusBadRequest).JSON(&model.SaferResponse{
+				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
 			})
+
 		}
 
 		var workflowInput = &model.WorkflowInput{
@@ -39,28 +41,29 @@ func Handler(c client.Client) gin.HandlerFunc {
 
 		we, err := c.ExecuteWorkflow(context.Background(), options, config.GetConfig().Temporal.Workflow, workflowInput)
 		if err != nil {
-			ctx.JSON(500, model.SaferResponse{
+			ctx.Status(500).JSON(model.SaferResponse{
 				WorkflowID: workflowInput.TransactionID,
 				RunID:      we.GetID(),
 				Code:       http.StatusInternalServerError,
 				Message:    err.Error(),
 			})
-			return
+			return err
 		}
 
 		var clientResponse model.ClientResponse
-		err = we.Get(ctx, &clientResponse)
+		err = we.Get(context.Background(), &clientResponse)
 		if err != nil {
-			ctx.JSON(500, model.SaferResponse{
+			ctx.Status(500).JSON(model.SaferResponse{
 				WorkflowID: workflowInput.TransactionID,
 				RunID:      we.GetID(),
 				Code:       http.StatusInternalServerError,
 				Message:    err.Error(),
 			})
-			return
+			return err
 		}
 
-		ctx.JSON(200, clientResponse)
+		ctx.Status(200).JSON(clientResponse)
+		return nil
 	}
 	return fn
 }
@@ -76,9 +79,9 @@ func main() {
 	}
 	defer c.Close()
 
-	g := gin.Default()
+	g := fiber.New()
 	publicRouter := g.Group("/api/v1")
-	publicRouter.POST("/moneytransfer", Handler(c))
+	publicRouter.Post("/moneytransfer", Handler(c))
 
-	g.Run(fmt.Sprintf("%s:%s", config.MoneyTransfer.Host, config.MoneyTransfer.Port))
+	g.Listen(fmt.Sprintf("%s:%s", config.MoneyTransfer.Host, config.MoneyTransfer.Port))
 }

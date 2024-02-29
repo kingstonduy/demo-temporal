@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"saga-rabbitmq-notclean/money-transfer-service/config"
+	"saga-rabbitmq-notclean/config"
 	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 
 	"sync"
@@ -21,11 +21,8 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func ConsumeAndPublish(topic string, url string) {
-	conn, err := amqp.Dial(url)
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
+func ConsumeAndPublish(topic string, conn *amqp.Connection) {
+	concurrency := 1000
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
@@ -41,9 +38,9 @@ func ConsumeAndPublish(topic string, url string) {
 	failOnError(err, "Failed to declare a queue")
 
 	err = ch.Qos(
-		10,    // prefetch count
-		0,     // prefetch size
-		false, // global
+		concurrency, // prefetch count
+		0,           // prefetch size
+		false,       // global
 	)
 	failOnError(err, "Failed to set QoS")
 
@@ -62,7 +59,6 @@ func ConsumeAndPublish(topic string, url string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	concurrency := 10
 	var wg sync.WaitGroup // used to coordinate when they are done, ie: if rabbit conn was closed
 	wg.Add(concurrency)
 
@@ -125,26 +121,30 @@ func main() {
 		config.GetConfig().RabbitMQ.Port,
 	)
 
+	conn, err := amqp.Dial(RabbitMQ_URL)
+	failOnError(err, "Failed to connect to RabbitMQ")
+	defer conn.Close()
+
 	wg := sync.WaitGroup{}
 	wg.Add(4)
 	go func() {
 		defer wg.Done()
-		ConsumeAndPublish(config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
+		ConsumeAndPublish(config.GetConfig().NapasMoney.Queue, conn)
 	}()
 
 	go func() {
 		defer wg.Done()
-		ConsumeAndPublish(config.GetConfig().NapasAccount.Queue, RabbitMQ_URL)
+		ConsumeAndPublish(config.GetConfig().NapasAccount.Queue, conn)
 	}()
 
 	go func() {
 		defer wg.Done()
-		ConsumeAndPublish(config.GetConfig().Limit.Queue, RabbitMQ_URL)
+		ConsumeAndPublish(config.GetConfig().Limit.Queue, conn)
 	}()
 
 	go func() {
 		defer wg.Done()
-		ConsumeAndPublish(config.GetConfig().T24.Queue, RabbitMQ_URL)
+		ConsumeAndPublish(config.GetConfig().T24.Queue, conn)
 	}()
 
 	wg.Wait()

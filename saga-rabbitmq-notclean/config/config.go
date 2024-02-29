@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/viper"
@@ -82,7 +83,14 @@ func GetConfig() *Config {
 	return config
 }
 
+var dbConn *gorm.DB = nil
+
 func GetDB() (db *gorm.DB, err error) {
+	if dbConn != nil {
+		return dbConn, nil
+	}
+
+	fmt.Println("💡💡💡 Create connection")
 	url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
 		GetConfig().Database.Postgres.Host,
 		GetConfig().Database.Postgres.Port,
@@ -91,16 +99,36 @@ func GetDB() (db *gorm.DB, err error) {
 		GetConfig().Database.Postgres.Password,
 	)
 
-	db, err = gorm.Open(postgres.Open(url), &gorm.Config{})
+	dbConn, err = gorm.Open(postgres.Open(url), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error connecting to database, %s", err)
 		return nil, err
 	}
 
-	return
+	sqlDB, err := dbConn.DB()
+	if err != nil {
+		log.Fatalf("Error getting underlying sql.DB, %s", err)
+		return nil, err
+	}
+
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(50)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(100)
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(time.Minute * 5)
+
+	return dbConn, nil
 }
 
-func GetAMQPChannel() *amqp.Channel {
+var conn *amqp.Connection
+
+func GetAMQPConnection() *amqp.Connection {
+	if conn != nil {
+		return conn
+	}
+
 	url := fmt.Sprintf("amqp://%s:%s@%s:%s/",
 		GetConfig().RabbitMQ.User,
 		GetConfig().RabbitMQ.Password,
@@ -108,15 +136,11 @@ func GetAMQPChannel() *amqp.Channel {
 		GetConfig().RabbitMQ.Port,
 	)
 
-	conn, err := amqp.Dial(url)
+	var err error
+	conn, err = amqp.Dial(url)
 	if err != nil {
 		log.Fatalf("Error connecting to RabbitMQ, %s", err)
 	}
 
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("Error opening a channel, %s", err)
-	}
-
-	return ch
+	return conn
 }

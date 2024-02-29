@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"saga-rabbitmq-notclean/money-transfer-service/config"
+	"saga-rabbitmq-notclean/config"
 	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 
 	"net/http"

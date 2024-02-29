@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"saga-rabbitmq-notclean/money-transfer-service/config"
+	"saga-rabbitmq-notclean/config"
 	"saga-rabbitmq-notclean/orchestrator-service/workflow"
+	"sync"
 
+	"github.com/pborman/uuid"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -19,46 +19,50 @@ func main() {
 	}
 	defer c.Close()
 
-	// This worker hosts both Workflow and Activity functions
-	w := worker.New(c, config.GetConfig().Temporal.TaskQueue, worker.Options{})
+	workers := 10
 
-	w.RegisterWorkflow(workflow.MoneyTransferService)
+	wg := &sync.WaitGroup{}
+	wg.Add(workers)
 
-	w.RegisterActivity(workflow.ValidateAccount)
+	for i := 0; i < workers; i++ {
+		go func() {
+			defer wg.Done()
+			// This worker hosts both Workflow and Activity functions
+			w := worker.New(c, config.GetConfig().Temporal.TaskQueue, worker.Options{
+				// MaxConcurrentWorkflowTaskPollers: 1,
+				// MaxConcurrentActivityTaskPollers: 1,
+				Identity: uuid.New(),
+			})
 
-	w.RegisterActivity(workflow.CompensateTransaction)
-	w.RegisterActivity(workflow.UpdateStateCreated)
+			w.RegisterWorkflow(workflow.MoneyTransferService)
 
-	w.RegisterActivity(workflow.LimitCut)
-	w.RegisterActivity(workflow.LimitCutCompensate)
+			w.RegisterActivity(workflow.ValidateAccount)
 
-	w.RegisterActivity(workflow.UpdateStateLimitCut)
+			w.RegisterActivity(workflow.CompensateTransaction)
+			w.RegisterActivity(workflow.UpdateStateCreated)
 
-	w.RegisterActivity(workflow.MoneyCut)
-	w.RegisterActivity(workflow.MoneyCutCompensate)
+			w.RegisterActivity(workflow.LimitCut)
+			w.RegisterActivity(workflow.LimitCutCompensate)
 
-	w.RegisterActivity(workflow.UpdateStateMoneyCut)
+			w.RegisterActivity(workflow.UpdateStateLimitCut)
 
-	w.RegisterActivity(workflow.UpdateMoney)
-	w.RegisterActivity(workflow.UpdateMoneyCompensate)
+			w.RegisterActivity(workflow.MoneyCut)
+			w.RegisterActivity(workflow.MoneyCutCompensate)
 
-	w.RegisterActivity(workflow.UpdateStateTransactionCompleted)
+			w.RegisterActivity(workflow.UpdateStateMoneyCut)
 
-	// Start listening to the Task Queue
-	go func() {
-		var input string
-		fmt.Scanln(&input)
-		if input == "stop" {
-			w.Stop()
-			os.Exit(0)
-		}
-	}()
+			w.RegisterActivity(workflow.UpdateMoney)
+			w.RegisterActivity(workflow.UpdateMoneyCompensate)
 
-	err = w.Run(worker.InterruptCh())
-	if err != nil {
-		log.Fatalln("unable to start Worker", err)
+			w.RegisterActivity(workflow.UpdateStateTransactionCompleted)
+
+			// Start listening to the Task Queue
+			err = w.Run(worker.InterruptCh())
+			if err != nil {
+				log.Fatalln("unable to start Worker", err)
+			}
+		}()
 	}
-
-	// i want that when i type stop in the terminal, the worker will stop
+	wg.Wait()
 
 }

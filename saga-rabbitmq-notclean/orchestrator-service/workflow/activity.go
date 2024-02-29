@@ -3,10 +3,9 @@ package workflow
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"math"
-	"saga-rabbitmq-notclean/money-transfer-service/config"
+	"saga-rabbitmq-notclean/config"
 	model "saga-rabbitmq-notclean/money-transfer-service/shared"
 	"time"
 
@@ -14,13 +13,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
-)
-
-var RabbitMQ_URL = fmt.Sprintf("amqp://%s:%s@%s:%s/",
-	config.GetConfig().RabbitMQ.User,
-	config.GetConfig().RabbitMQ.Password,
-	config.GetConfig().RabbitMQ.Host,
-	config.GetConfig().RabbitMQ.Port,
 )
 
 func IsRetryableError(err error) bool {
@@ -33,13 +25,8 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func RequestAndReply[T any, K any](req T, res *K, topic string, url string) error {
-	conn, err := amqp.Dial(url)
-	if err != nil {
-		log.Panicf("%s: Failed to connect to RabbitMQ", err)
-		return err
-	}
-	defer conn.Close()
+func RequestAndReply[T any, K any](req T, res *K, topic string) error {
+	conn := config.GetAMQPConnection()
 
 	ch, err := conn.Channel()
 	if err != nil {
@@ -111,6 +98,7 @@ func RequestAndReply[T any, K any](req T, res *K, topic string, url string) erro
 			break
 		}
 	}
+	defer ch.Close()
 
 	return nil
 }
@@ -120,7 +108,7 @@ func ValidateAccount(ctx context.Context, input model.SaferRequest) (output mode
 	log.Info("💡Validate Account activity starts")
 
 	var response model.SaferResponse
-	err = RequestAndReply(input, &response, config.GetConfig().NapasAccount.Queue, RabbitMQ_URL)
+	err = RequestAndReply(input, &response, config.GetConfig().NapasAccount.Queue)
 	if err != nil {
 		return output, err
 	}
@@ -146,7 +134,7 @@ func LimitCut(ctx context.Context, input model.SaferRequest) error {
 
 	input.Amount = -int64(math.Abs(float64(input.Amount)))
 	var response model.SaferResponse
-	err := RequestAndReply(input, &response, config.GetConfig().Limit.Queue, RabbitMQ_URL)
+	err := RequestAndReply(input, &response, config.GetConfig().Limit.Queue)
 	if err != nil {
 		return err
 	}
@@ -164,7 +152,7 @@ func LimitCutCompensate(ctx context.Context, input model.SaferRequest) error {
 
 	input.Amount = int64(math.Abs(float64(input.Amount)))
 	var response model.SaferResponse
-	err := RequestAndReply(input, &response, config.GetConfig().Limit.Queue, RabbitMQ_URL)
+	err := RequestAndReply(input, &response, config.GetConfig().Limit.Queue)
 	if err != nil {
 		return err
 	}
@@ -181,7 +169,7 @@ func MoneyCut(ctx context.Context, input model.SaferRequest) error {
 
 	input.Amount = -int64(math.Abs(float64(input.Amount)))
 	var response model.SaferResponse
-	err := RequestAndReply(input, &response, config.GetConfig().T24.Queue, RabbitMQ_URL)
+	err := RequestAndReply(input, &response, config.GetConfig().T24.Queue)
 	if err != nil {
 		return err
 	}
@@ -198,7 +186,7 @@ func MoneyCutCompensate(ctx context.Context, input model.SaferRequest) error {
 
 	input.Amount = int64(math.Abs(float64(input.Amount)))
 	var response model.SaferResponse
-	err := RequestAndReply(input, &response, config.GetConfig().T24.Queue, RabbitMQ_URL)
+	err := RequestAndReply(input, &response, config.GetConfig().T24.Queue)
 	if err != nil {
 		return err
 	}
@@ -215,7 +203,7 @@ func UpdateMoney(ctx context.Context, input model.SaferRequest) error {
 
 	input.Amount = int64(math.Abs(float64(input.Amount)))
 	var response model.SaferResponse
-	err := RequestAndReply(input, &response, config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
+	err := RequestAndReply(input, &response, config.GetConfig().NapasMoney.Queue)
 	if err != nil {
 		return err
 	}
@@ -232,7 +220,7 @@ func UpdateMoneyCompensate(ctx context.Context, input model.SaferRequest) error 
 
 	input.Amount = -int64(math.Abs(float64(input.Amount)))
 	var response model.SaferResponse
-	err := RequestAndReply(input, &response, config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
+	err := RequestAndReply(input, &response, config.GetConfig().NapasMoney.Queue)
 	if err != nil {
 		return err
 	}

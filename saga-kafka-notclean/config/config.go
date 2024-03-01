@@ -1,4 +1,4 @@
-package config
+package shared
 
 import (
 	"fmt"
@@ -16,27 +16,46 @@ type Config struct {
 		Host  string `mapstructure:"host"`
 		Port  string `mapstructure:"port"`
 		Queue string `mapstructure:"queue"`
+		Kafka struct {
+			Topic struct {
+				In  string `mapstructure:"in"`
+				Out string `mapstructure:"out"`
+			} `mapstructure:"topic"`
+		} `mapstructure:"kafka"`
 	} `mapstructure:"money-transfer"`
 	Limit struct {
 		Host  string `mapstructure:"host"`
 		Port  string `mapstructure:"port"`
 		Queue string `mapstructure:"queue"`
+		Kafka struct {
+			Topic struct {
+				In  string `mapstructure:"in"`
+				Out string `mapstructure:"out"`
+			} `mapstructure:"topic"`
+		} `mapstructure:"kafka"`
 	} `mapstructure:"limit"`
 	T24 struct {
 		Host  string `mapstructure:"host"`
 		Port  string `mapstructure:"port"`
 		Queue string `mapstructure:"queue"`
+		Kafka struct {
+			Topic struct {
+				In  string `mapstructure:"in"`
+				Out string `mapstructure:"out"`
+			} `mapstructure:"topic"`
+		} `mapstructure:"kafka"`
 	} `mapstructure:"t24"`
-	NapasMoney struct {
+	Napas struct {
 		Host  string `mapstructure:"host"`
 		Port  string `mapstructure:"port"`
 		Queue string `mapstructure:"queue"`
-	} `mapstructure:"napas-money"`
-	NapasAccount struct {
-		Host  string `mapstructure:"host"`
-		Port  string `mapstructure:"port"`
-		Queue string `mapstructure:"queue"`
-	} `mapstructure:"napas-account"`
+		Kafka struct {
+			Topic struct {
+				In  string `mapstructure:"in"`
+				Out string `mapstructure:"out"`
+			} `mapstructure:"topic"`
+		} `mapstructure:"kafka"`
+	} `mapstructure:"t24"`
 	Database struct {
 		Postgres struct {
 			Host     string `mapstructure:"host"`
@@ -48,7 +67,7 @@ type Config struct {
 	} `mapstructure:"database"`
 	Temporal struct {
 		Host      string `mapstructure:"host"`
-		Port      string `mapstructure:"port"`
+		Port      int    `mapstructure:"port"`
 		TaskQueue string `mapstructure:"taskqueue"`
 		Workflow  string `mapstructure:"workflow"`
 	} `mapstructure:"temporal"`
@@ -58,6 +77,12 @@ type Config struct {
 		User     string `mapstructure:"user"`
 		Password string `mapstructure:"password"`
 	} `mapstructure:"rabbitmq"`
+	Kafka struct {
+		BootstrapServer struct {
+			Host string `mapstructure:"host"`
+			Port string `mapstructure:"port"`
+		} `mapstructure:"bootstrap-server"`
+	} `mapstructure:"kafka"`
 }
 
 var config *Config = nil

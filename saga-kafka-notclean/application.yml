@@ -2,26 +2,38 @@ money-transfer:
   host: localhost
   port: 7201
   queue: money-transfer-queue
+  kafka:
+    topic:
+      in: money-transfer-topic-in
+      out: money-transfer-topic-out
+
 
 limit:
   host: localhost
   port: 7202
   queue: limit-queue
+  kafka:
+    topic:
+      in: limit-topic-in
+      out: limit-topic-out
 
 t24:
   host: localhost
   port: 7203
   queue: t24-queue
+  kafka:
+    topic:
+      in: t24-topic-in
+      out: t24-topic-out
 
-napas-money:
+napas:
   host: localhost
   port: 7204
-  queue: napas-money-queue
-
-napas-account:
-  host: localhost
-  port: 7204
-  queue: napas-account-queue
+  queue: napas-queue
+  kafka:
+    topic:
+      in: napas-topic-in
+      out: napas-topic-out
 
 database:
   postgres:
@@ -42,3 +54,8 @@ rabbitmq:
   port: 5673
   user: guest
   password: guest
+
+kakfa:
+  bootstrap-server:
+    host: localhost
+    port: 9092

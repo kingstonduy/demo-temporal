@@ -1,172 +1,121 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"saga-rabbitmq-notclean/config"
-	model "saga-rabbitmq-notclean/money-transfer-service/shared"
+	shared "saga-kafka-notclean/config"
 
 	"net/http"
-	"sync"
-	"time"
 
-	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func update(s string) model.SaferResponse {
-	var req model.SaferRequest
-
-	err := json.Unmarshal([]byte(s), &req)
-	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusBadRequest,
-			Message:    err.Error(),
-		}
-	}
+func update(req shared.SaferRequest) (model shared.SaferResponse, err error) {
 	log.Printf("💡Request %+v\n", req)
 
-	db, err := config.GetDB()
+	db, err := shared.GetDB()
 	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		log.Println(err)
+		return
 	}
 
-	var accountLimitEntity model.AccountLimitEntity
+	var accountLimitEntity shared.AccountLimitEntity
 	err = db.Where("account_id = ?", req.FromAccountID).First(&accountLimitEntity).Error
 	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		log.Println(err)
+		return
 	}
 
 	accountLimitEntity.Amount += req.Amount
 	if accountLimitEntity.Amount < 0 {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusBadRequest,
-			Message:    "Not enough money",
-		}
+		log.Println(err)
+		return
 	}
 
 	err = db.Save(&accountLimitEntity).Error
 	if err != nil {
-		return model.SaferResponse{
-			WorkflowID: req.WorkflowID,
-			RunID:      req.RunID,
-			Code:       http.StatusInternalServerError,
-			Message:    err.Error(),
+		log.Println(err)
+		return
+	}
+
+	return shared.SaferResponse{
+		WorkflowID: req.WorkflowID,
+		RunID:      req.RunID,
+		SignalName: "limit",
+		Code:       http.StatusOK,
+		Message:    "update record napas success",
+	}, nil
+}
+
+func Produce[T any](topic string, message T) {
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": fmt.Sprintf("%s:%s",
+			shared.GetConfig().Kafka.BootstrapServer.Host,
+			shared.GetConfig().Kafka.BootstrapServer.Port,
+		),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	jsonBytes, err := json.Marshal(message)
+	if err != nil {
+		panic(err)
+	}
+
+	// Produce messages to topic (asynchronously)
+	p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          []byte(jsonBytes),
+	}, nil)
+
+	// Wait for message deliveries
+	p.Flush(15 * 1000)
+	p.Close()
+}
+
+// consume from kafka then signal the workflow to continue
+func ConsumeAndProduce[T any, K any](topicIn string, topicOut string, req T, res K) {
+
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": fmt.Sprintf("%s:%s",
+			shared.GetConfig().Kafka.BootstrapServer.Host,
+			shared.GetConfig().Kafka.BootstrapServer.Port,
+		),
+		"group.id":          "myGroup",
+		"auto.offset.reset": "earliest",
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	c.SubscribeTopics([]string{topicIn}, nil)
+
+	for {
+		msg, err := c.ReadMessage(-1)
+		if err == nil {
+			err := json.Unmarshal([]byte(string(msg.Value)), &req)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			res, err = update(req)
+
+			Produce(topicOut, res)
+		} else {
+			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+			break
 		}
 	}
 
-	return model.SaferResponse{
-		WorkflowID: req.WorkflowID,
-		RunID:      req.RunID,
-		Code:       http.StatusOK,
-		Message:    "update record napas success",
-	}
-}
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
-}
-
-func ConsumeAndPublish(topic string, url string) {
-	conn, err := amqp.Dial(url)
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		topic, // name
-		false, // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	err = ch.Qos(
-		10,    // prefetch count
-		0,     // prefetch size
-		false, // global
-	)
-	failOnError(err, "Failed to set QoS")
-
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-
-	failOnError(err, "Failed to register a consumer")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	concurrency := 10
-	var wg sync.WaitGroup // used to coordinate when they are done, ie: if rabbit conn was closed
-	wg.Add(concurrency)
-
-	for x := 0; x < concurrency; x++ {
-		go func() {
-			defer wg.Done()
-			for d := range msgs {
-				log.Printf(" [*] Awaiting RPC requests")
-				n := string(d.Body)
-				failOnError(err, "Failed to convert body to integer")
-
-				var response model.SaferResponse = update(n)
-
-				// convert struct to json string
-				responseStr, _ := json.Marshal(response)
-
-				err = ch.PublishWithContext(ctx,
-					"",        // exchange
-					d.ReplyTo, // routing key
-					false,     // mandatory
-					false,     // immediate
-					amqp.Publishing{
-						ContentType:   "text/plain",
-						CorrelationId: d.CorrelationId,
-						Body:          []byte(responseStr),
-					})
-				failOnError(err, "Failed to publish a message")
-
-				d.Ack(false)
-			}
-		}()
-	}
-	wg.Wait() // when all goroutine's exit, the app exits
+	c.Close()
 }
 
 func main() {
-	var RabbitMQ_URL = fmt.Sprintf("amqp://%s:%s@%s:%s/",
-		config.GetConfig().RabbitMQ.User,
-		config.GetConfig().RabbitMQ.Password,
-		config.GetConfig().RabbitMQ.Host,
-		config.GetConfig().RabbitMQ.Port,
-	)
-	ConsumeAndPublish(config.GetConfig().Limit.Queue, RabbitMQ_URL)
+	var req model.SaferRequest
+	var res model.SaferResponse
+	ConsumeAndProduce(shared.GetConfig().Limit.Kafka.Topic.In, req, res)
 }

@@ -1,4 +1,4 @@
-package model
+package shared
 
 type CLientRequest struct {
 	FromAccountID string `json:"FromAccountID"`
@@ -47,6 +47,7 @@ type SaferRequest struct {
 type SaferResponse struct {
 	WorkflowID string `json:"WorkflowID"`
 	RunID      string `json:"RunID"`
+	SignalName string `json:"SignalName"`
 	Code       int    `json:"Code"`
 	Status     string `json:"Status"`
 	Message    string `json:"Message"`

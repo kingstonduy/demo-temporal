@@ -1,8 +1,9 @@
-module saga-rabbitmq-notclean
+module saga-kafka-notclean
 
 go 1.20
 
 require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/gofiber/fiber/v2 v2.52.1
 	github.com/pborman/uuid v1.2.1
 	github.com/rabbitmq/amqp091-go v1.9.0

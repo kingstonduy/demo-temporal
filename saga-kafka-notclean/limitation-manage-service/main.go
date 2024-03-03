@@ -14,17 +14,73 @@ import (
 
 var ch = make(chan shared.SaferResponse)
 
-func update(s string) (model shared.SaferResponse, err error) {
+func update(s string) shared.SaferResponse {
 	var req shared.SaferRequest
-	err = json.Unmarshal([]byte(s), &req)
+
+	err := json.Unmarshal([]byte(s), &req)
+	if err != nil {
+		return shared.SaferResponse{
+			WorkflowID: req.WorkflowID,
+			RunID:      req.RunID,
+			Action:     req.Action,
+			Code:       http.StatusBadRequest,
+			Message:    err.Error(),
+		}
+	}
+	log.Printf("💡Request %+v\n", req)
+
+	db, err := shared.GetDB()
+	if err != nil {
+		return shared.SaferResponse{
+			WorkflowID: req.WorkflowID,
+			RunID:      req.RunID,
+			Action:     req.Action,
+			Code:       http.StatusInternalServerError,
+			Message:    err.Error(),
+		}
+	}
+
+	var accountLimitEntity shared.AccountLimitEntity
+	err = db.Where("account_id = ?", req.FromAccountID).First(&accountLimitEntity).Error
+	if err != nil {
+		return shared.SaferResponse{
+			WorkflowID: req.WorkflowID,
+			RunID:      req.RunID,
+			Action:     req.Action,
+			Code:       http.StatusInternalServerError,
+			Message:    err.Error(),
+		}
+	}
+
+	accountLimitEntity.Amount += req.Amount
+	if accountLimitEntity.Amount < 0 {
+		return shared.SaferResponse{
+			WorkflowID: req.WorkflowID,
+			RunID:      req.RunID,
+			Action:     req.Action,
+			Code:       http.StatusBadRequest,
+			Message:    "Not enough money",
+		}
+	}
+
+	err = db.Save(&accountLimitEntity).Error
+	if err != nil {
+		return shared.SaferResponse{
+			WorkflowID: req.WorkflowID,
+			RunID:      req.RunID,
+			Action:     req.Action,
+			Code:       http.StatusInternalServerError,
+			Message:    err.Error(),
+		}
+	}
 
 	return shared.SaferResponse{
 		WorkflowID: req.WorkflowID,
 		RunID:      req.RunID,
-		Action:     "limit",
+		Action:     req.Action,
 		Code:       http.StatusOK,
 		Message:    "update record napas success",
-	}, nil
+	}
 }
 
 func Produce(topic string) {
@@ -83,7 +139,7 @@ func Consume(topic string, req shared.SaferRequest) {
 
 		if err == nil {
 			log.Println("📩 Received from kafka", string(msg.Value))
-			res, _ := update(string(msg.Value))
+			res := update(string(msg.Value))
 
 			ch <- res
 		} else {

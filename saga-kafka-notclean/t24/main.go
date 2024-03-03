@@ -38,8 +38,8 @@ func update(s string) shared.SaferResponse {
 		}
 	}
 
-	var accountLimitEntity shared.AccountLimitEntity
-	err = db.Where("account_id = ?", req.FromAccountID).First(&accountLimitEntity).Error
+	var t24Entity shared.T24Entity
+	err = db.Where("account_id = ?", req.FromAccountID).First(&t24Entity).Error
 	if err != nil {
 		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
@@ -50,8 +50,10 @@ func update(s string) shared.SaferResponse {
 		}
 	}
 
-	accountLimitEntity.Amount += req.Amount
-	if accountLimitEntity.Amount < 0 {
+	t24Entity.Amount += req.Amount
+
+	fmt.Printf("💡T24Entity %+v\n", t24Entity)
+	if t24Entity.Amount < 0 {
 		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
@@ -61,7 +63,7 @@ func update(s string) shared.SaferResponse {
 		}
 	}
 
-	err = db.Save(&accountLimitEntity).Error
+	err = db.Save(&t24Entity).Error
 	if err != nil {
 		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,

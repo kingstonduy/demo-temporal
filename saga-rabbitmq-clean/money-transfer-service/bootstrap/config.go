@@ -1,12 +1,50 @@
 package bootstrap
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/lengocson131002/go-clean/pkg/env"
+	"github.com/spf13/viper"
+	"go.temporal.io/sdk/client"
 )
 
 func GetConfigure() env.Configure {
-	var file env.ConfigFile = ".env"
+	var file env.ConfigFile = "../.env"
 	return env.NewViperConfig(&file)
+}
+
+func GetConfig() *Config {
+	var config *Config
+	var cfg *viper.Viper
+	if cfg == nil {
+		cfg = viper.New()
+		cfg.SetConfigType("yml")
+		cfg.SetConfigFile("../application.yml")
+
+		err := cfg.ReadInConfig()
+		if err != nil {
+			log.Fatalf("Error reading config file, %s", err)
+		}
+	}
+
+	err := cfg.Unmarshal(&config)
+	if err != nil {
+		log.Fatalf("unable to decode string struct, %v", err)
+	}
+
+	return config
+}
+
+func GetTemporalClient(cfg env.Configure) *client.Client {
+	c, err := client.Dial(client.Options{
+		HostPort: fmt.Sprintf("%s:%s", GetConfig().Temporal.Host, GetConfig().Temporal.Port),
+	})
+	if err != nil {
+		log.Fatalf("unable to create client, %v", err)
+	}
+
+	return &c
 }
 
 func GetDatabaseConfig(cfg env.Configure) *PostgresConfig {

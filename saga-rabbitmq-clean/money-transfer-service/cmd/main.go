@@ -6,9 +6,7 @@ import (
 
 	"github.com/lengocson131002/go-clean/bootstrap"
 	"github.com/lengocson131002/go-clean/infras/data"
-	"github.com/lengocson131002/go-clean/infras/outbound"
 	"github.com/lengocson131002/go-clean/pkg/logger"
-	"github.com/lengocson131002/go-clean/pkg/xslt"
 	gprc "github.com/lengocson131002/go-clean/presentation/grpc"
 	"github.com/lengocson131002/go-clean/presentation/http"
 	"github.com/lengocson131002/go-clean/presentation/http/controller"
@@ -29,8 +27,11 @@ var Module = fx.Module("main",
 	fx.Provide(bootstrap.GetTracer),
 	fx.Provide(data.NewUserRepository),
 	fx.Provide(controller.NewUserController),
+	fx.Provide(controller.NewMoneyTransferController),
 	fx.Provide(middleware.NewAuthMiddleware),
 	fx.Provide(bootstrap.NewHealthChecker),
+	fx.Provide(bootstrap.GetConfig),
+	fx.Provide(bootstrap.GetTemporalClient),
 
 	fx.Provide(usecase.NewVerifyUserHandler),
 	fx.Provide(usecase.NewCreateUserHandler),
@@ -39,6 +40,7 @@ var Module = fx.Module("main",
 	fx.Provide(usecase.NewUpdateUserHandler),
 	fx.Provide(usecase.NewLoginUserHandler),
 	fx.Provide(usecase.NewOpenAccountHandler),
+	fx.Provide(usecase.NewMoneyTransferHandler),
 
 	fx.Provide(bootstrap.NewRequestLoggingBehavior),
 	fx.Provide(bootstrap.NewTracingBehavior),
@@ -53,8 +55,6 @@ var Module = fx.Module("main",
 	fx.Provide(bootstrap.NewMetricer),
 	fx.Provide(bootstrap.GetT24MqConfig),
 	fx.Provide(controller.NewT24AccountController),
-	fx.Provide(xslt.NewDefaultXslt),
-	fx.Provide(outbound.NewT24MqClient),
 	fx.Invoke(bootstrap.RegisterPipeline),
 )
 

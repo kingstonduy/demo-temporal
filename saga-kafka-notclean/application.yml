@@ -47,7 +47,7 @@ temporal:
   host: localhost
   port: 7233
   taskqueue: money-transfer-service-task-queue
-  workflow: MoneyTransferService
+  workflow: MoneyTransferWorkflow
   
 rabbitmq:
   host: localhost
@@ -55,7 +55,7 @@ rabbitmq:
   user: guest
   password: guest
 
-kakfa:
+kafka:
   bootstrap-server:
     host: localhost
     port: 9092

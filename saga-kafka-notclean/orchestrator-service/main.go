@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"saga-rabbitmq-notclean/config"
-	"saga-rabbitmq-notclean/orchestrator-service/workflow"
+	shared "saga-kafka-notclean/config"
+	"saga-kafka-notclean/orchestrator-service/workflow"
 	"sync"
 
 	"github.com/pborman/uuid"
@@ -19,7 +19,7 @@ func main() {
 	}
 	defer c.Close()
 
-	workers := 10
+	workers := 1
 
 	wg := &sync.WaitGroup{}
 	wg.Add(workers)
@@ -28,13 +28,13 @@ func main() {
 		go func() {
 			defer wg.Done()
 			// This worker hosts both Workflow and Activity functions
-			w := worker.New(c, config.GetConfig().Temporal.TaskQueue, worker.Options{
+			w := worker.New(c, shared.GetConfig().Temporal.TaskQueue, worker.Options{
 				// MaxConcurrentWorkflowTaskPollers: 1,
 				// MaxConcurrentActivityTaskPollers: 1,
 				Identity: uuid.New(),
 			})
 
-			w.RegisterWorkflow(workflow.MoneyTransferService)
+			w.RegisterWorkflow(workflow.MoneyTransferWorkflow)
 
 			w.RegisterActivity(workflow.ValidateAccount)
 

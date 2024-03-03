@@ -1,11 +1,11 @@
-CREATE TABLE limit_manage (
+CREATE TABLE t24 (
     account_id VARCHAR(255) PRIMARY KEY,
     amount BIGINT NOT NULL
 );
 
-INSERT INTO limit_manage (account_id, amount)
+INSERT INTO t24 (account_id, amount)
 VALUES
-('OCB12345',  100000),
+('OCB12345', 100000),
 ('OCB00001', 100000),
 ('OCB00002', 100000),
 ('OCB00003', 100000),

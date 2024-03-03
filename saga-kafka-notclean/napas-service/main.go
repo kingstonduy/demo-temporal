@@ -1,50 +1,53 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"saga-rabbitmq-notclean/config"
-	model "saga-rabbitmq-notclean/money-transfer-service/shared"
+	shared "saga-kafka-notclean/config"
 
 	"net/http"
 	"sync"
-	"time"
 
-	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func verify(s string) model.SaferResponse {
-	var req model.SaferRequest
+func verify(s string) shared.SaferResponse {
+	var req shared.SaferRequest
 
 	err := json.Unmarshal([]byte(s), &req)
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusBadRequest,
 			Message:    err.Error(),
 		}
 	}
 	log.Printf("💡Request %+v\n", req)
 
-	db, err := config.GetDB()
+	db, err := shared.GetDB()
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
 	}
 
-	var napasEntity model.NapasEntity
+	var napasEntity shared.NapasEntity
 	err = db.Where("account_id = ?", req.ToAccountID).First(&napasEntity).Error
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
@@ -52,52 +55,61 @@ func verify(s string) model.SaferResponse {
 
 	jsonData, err := json.Marshal(napasEntity)
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
 	}
 
-	return model.SaferResponse{
+	return shared.SaferResponse{
 		WorkflowID: req.WorkflowID,
 		RunID:      req.RunID,
+		Action:     req.Action,
 		Code:       http.StatusOK,
 		Message:    string(jsonData),
 	}
 }
 
-func update(s string) model.SaferResponse {
-	var req model.SaferRequest
+func update(s string) shared.SaferResponse {
+	var req shared.SaferRequest
 
 	err := json.Unmarshal([]byte(s), &req)
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusBadRequest,
 			Message:    err.Error(),
 		}
 	}
 	log.Printf("💡Request %+v\n", req)
 
-	db, err := config.GetDB()
+	db, err := shared.GetDB()
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
 	}
 
-	var napasEntity model.NapasEntity
+	var napasEntity shared.NapasEntity
 	err = db.Where("account_id = ?", req.ToAccountID).First(&napasEntity).Error
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
@@ -105,9 +117,10 @@ func update(s string) model.SaferResponse {
 
 	napasEntity.Amount += req.Amount
 	if napasEntity.Amount < 0 {
-		return model.SaferResponse{
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusBadRequest,
 			Message:    "Not enough money",
 		}
@@ -115,128 +128,126 @@ func update(s string) model.SaferResponse {
 
 	err = db.Save(&napasEntity).Error
 	if err != nil {
-		return model.SaferResponse{
+		log.Println(err.Error())
+		return shared.SaferResponse{
 			WorkflowID: req.WorkflowID,
 			RunID:      req.RunID,
+			Action:     req.Action,
 			Code:       http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
 	}
 
-	return model.SaferResponse{
+	return shared.SaferResponse{
 		WorkflowID: req.WorkflowID,
 		RunID:      req.RunID,
+		Action:     req.Action,
 		Code:       http.StatusOK,
 		Message:    "update record napas success",
 	}
 }
 
-func failOnError(err error, msg string) {
+var ch = make(chan shared.SaferResponse)
+
+func Produce(topic string) {
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": fmt.Sprintf("%s:%s",
+			shared.GetConfig().Kafka.BootstrapServer.Host,
+			shared.GetConfig().Kafka.BootstrapServer.Port,
+		),
+	})
 	if err != nil {
-		log.Panicf("%s: %s", msg, err)
+		log.Println(err.Error())
+		panic(err)
 	}
+
+	for message := range ch {
+		// convert message into json string
+		messageString, err := json.Marshal(message)
+		if err != nil {
+			log.Println(err.Error())
+			panic(err)
+		}
+
+		log.Printf("💡Response to topic %s, message = %s\n", topic, messageString)
+		// Produce messages to topic (asynchronously)
+		p.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+			Value:          []byte(messageString),
+		}, nil)
+
+		// Wait for message deliveries
+	}
+
+	defer p.Close()
+	defer close(ch)
 }
 
-func ConsumeAndPublish(topic string, url string) {
-	conn, err := amqp.Dial(url)
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		topic, // name
-		false, // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	err = ch.Qos(
-		10,    // prefetch count
-		0,     // prefetch size
-		false, // global
-	)
-	failOnError(err, "Failed to set QoS")
-
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-
-	failOnError(err, "Failed to register a consumer")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	concurrency := 10
-	var wg sync.WaitGroup // used to coordinate when they are done, ie: if rabbit conn was closed
-	wg.Add(concurrency)
-
-	for x := 0; x < concurrency; x++ {
-		go func() {
-			defer wg.Done()
-			for d := range msgs {
-				log.Printf(" [*] Awaiting RPC requests")
-				n := string(d.Body)
-				failOnError(err, "Failed to convert body to integer")
-
-				var response model.SaferResponse
-				if topic == config.GetConfig().NapasAccount.Queue {
-					response = verify(n)
-				} else if topic == config.GetConfig().NapasMoney.Queue {
-					response = update(n)
-				}
-
-				// convert struct to json string
-				responseStr, _ := json.Marshal(response)
-
-				err = ch.PublishWithContext(ctx,
-					"",        // exchange
-					d.ReplyTo, // routing key
-					false,     // mandatory
-					false,     // immediate
-					amqp.Publishing{
-						ContentType:   "text/plain",
-						CorrelationId: d.CorrelationId,
-						Body:          []byte(responseStr),
-					})
-				failOnError(err, "Failed to publish a message")
-
-				d.Ack(false)
-			}
-		}()
+// consume from kafka then signal the workflow to continue
+func Consume(topic string, req shared.SaferRequest) {
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": fmt.Sprintf("%s:%s",
+			shared.GetConfig().Kafka.BootstrapServer.Host,
+			shared.GetConfig().Kafka.BootstrapServer.Port,
+		),
+		"group.id":          "myGroup",
+		"auto.offset.reset": "earliest",
+	})
+	log.Printf("💡Consume from topic: %s\n", topic)
+	if err != nil {
+		log.Println(err.Error())
+		panic(err)
 	}
-	wg.Wait() // when all goroutine's exit, the app exits
+
+	err = c.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		log.Println(err.Error())
+		panic(err)
+	}
+
+	for {
+		msg, err := c.ReadMessage(-1)
+		if err == nil {
+			log.Println("📩 Received from kafka", string(msg.Value))
+			err := json.Unmarshal([]byte(string(msg.Value)), &req)
+			if err != nil {
+				log.Println(err.Error())
+				log.Println(err)
+				return
+			}
+
+			if req.Action == "napas-account" {
+				res := verify(string(msg.Value))
+				ch <- res
+			} else if req.Action == "napas-money" {
+				res := update(string(msg.Value))
+				ch <- res
+			}
+		} else {
+			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+			break
+		}
+	}
+
+	c.Close()
+}
+
+func Handler() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		Consume(shared.GetConfig().Napas.Kafka.Topic.In, shared.SaferRequest{})
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		Produce(shared.GetConfig().Napas.Kafka.Topic.Out)
+	}()
+	wg.Wait()
 }
 
 func main() {
-	var RabbitMQ_URL = fmt.Sprintf("amqp://%s:%s@%s:%s/",
-		config.GetConfig().RabbitMQ.User,
-		config.GetConfig().RabbitMQ.Password,
-		config.GetConfig().RabbitMQ.Host,
-		config.GetConfig().RabbitMQ.Port,
-	)
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		ConsumeAndPublish(config.GetConfig().NapasAccount.Queue, RabbitMQ_URL)
-	}()
-
-	go func() {
-		defer wg.Done()
-		ConsumeAndPublish(config.GetConfig().NapasMoney.Queue, RabbitMQ_URL)
-	}()
-
-	wg.Wait()
+	Handler()
 }

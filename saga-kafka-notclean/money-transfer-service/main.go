@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"saga-rabbitmq-notclean/config"
-	model "saga-rabbitmq-notclean/money-transfer-service/shared"
+	shared "saga-kafka-notclean/config"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pborman/uuid"
@@ -16,18 +15,20 @@ import (
 // request, response to client. starts a workflow then wait for the workflow to finish
 func Handler(c client.Client) fiber.Handler {
 	fn := func(ctx *fiber.Ctx) error {
-		var clientReq model.CLientRequest
+		var clientReq shared.CLientRequest
 		err := ctx.BodyParser(&clientReq)
 		if err != nil {
 			log.Println(err.Error())
-			ctx.Status(fiber.StatusBadRequest).JSON(&model.SaferResponse{
+			ctx.Status(fiber.StatusBadRequest).JSON(&shared.SaferResponse{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
 			})
+			return err
 
 		}
+		log.Println("💡Client request ", clientReq)
 
-		var workflowInput = &model.WorkflowInput{
+		var workflowInput = &shared.WorkflowInput{
 			TransactionID: uuid.New(),
 			FromAccountID: clientReq.FromAccountID,
 			ToAccountID:   clientReq.ToAccountID,
@@ -35,13 +36,14 @@ func Handler(c client.Client) fiber.Handler {
 		}
 
 		options := client.StartWorkflowOptions{
-			ID:        config.GetConfig().Temporal.Workflow + "-" + workflowInput.TransactionID,
-			TaskQueue: config.GetConfig().Temporal.TaskQueue,
+			ID:        shared.GetConfig().Temporal.Workflow + "-" + workflowInput.TransactionID,
+			TaskQueue: shared.GetConfig().Temporal.TaskQueue,
 		}
 
-		we, err := c.ExecuteWorkflow(context.Background(), options, config.GetConfig().Temporal.Workflow, workflowInput)
+		log.Println("Workflow input ", workflowInput)
+		we, err := c.ExecuteWorkflow(context.Background(), options, shared.GetConfig().Temporal.Workflow, workflowInput)
 		if err != nil {
-			ctx.Status(500).JSON(model.SaferResponse{
+			ctx.Status(500).JSON(shared.SaferResponse{
 				WorkflowID: workflowInput.TransactionID,
 				RunID:      we.GetID(),
 				Code:       http.StatusInternalServerError,
@@ -50,10 +52,10 @@ func Handler(c client.Client) fiber.Handler {
 			return err
 		}
 
-		var clientResponse model.ClientResponse
+		var clientResponse shared.ClientResponse
 		err = we.Get(context.Background(), &clientResponse)
 		if err != nil {
-			ctx.Status(500).JSON(model.SaferResponse{
+			ctx.Status(500).JSON(shared.SaferResponse{
 				WorkflowID: workflowInput.TransactionID,
 				RunID:      we.GetID(),
 				Code:       http.StatusInternalServerError,
@@ -69,7 +71,7 @@ func Handler(c client.Client) fiber.Handler {
 }
 
 func main() {
-	config := config.GetConfig()
+	config := shared.GetConfig()
 
 	c, err := client.Dial(client.Options{
 		HostPort: fmt.Sprintf("%s:%s", config.Temporal.Host, config.Temporal.Port),

@@ -5,50 +5,29 @@ import (
 	"fmt"
 	"log"
 	shared "saga-kafka-notclean/config"
+	"sync"
 
 	"net/http"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-func update(req shared.SaferRequest) (model shared.SaferResponse, err error) {
-	log.Printf("💡Request %+v\n", req)
+var ch = make(chan shared.SaferResponse)
 
-	db, err := shared.GetDB()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	var accountLimitEntity shared.AccountLimitEntity
-	err = db.Where("account_id = ?", req.FromAccountID).First(&accountLimitEntity).Error
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	accountLimitEntity.Amount += req.Amount
-	if accountLimitEntity.Amount < 0 {
-		log.Println(err)
-		return
-	}
-
-	err = db.Save(&accountLimitEntity).Error
-	if err != nil {
-		log.Println(err)
-		return
-	}
+func update(s string) (model shared.SaferResponse, err error) {
+	var req shared.SaferRequest
+	err = json.Unmarshal([]byte(s), &req)
 
 	return shared.SaferResponse{
 		WorkflowID: req.WorkflowID,
 		RunID:      req.RunID,
-		SignalName: "limit",
+		Action:     "limit",
 		Code:       http.StatusOK,
 		Message:    "update record napas success",
 	}, nil
 }
 
-func Produce[T any](topic string, message T) {
+func Produce(topic string) {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": fmt.Sprintf("%s:%s",
 			shared.GetConfig().Kafka.BootstrapServer.Host,
@@ -59,24 +38,29 @@ func Produce[T any](topic string, message T) {
 		panic(err)
 	}
 
-	jsonBytes, err := json.Marshal(message)
-	if err != nil {
-		panic(err)
+	for message := range ch {
+		// convert message into json string
+		messageString, err := json.Marshal(message)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("💡Response to topic %s, message = %s\n", topic, messageString)
+		// Produce messages to topic (asynchronously)
+		p.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+			Value:          []byte(messageString),
+		}, nil)
+
+		// Wait for message deliveries
 	}
 
-	// Produce messages to topic (asynchronously)
-	p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          []byte(jsonBytes),
-	}, nil)
-
-	// Wait for message deliveries
-	p.Flush(15 * 1000)
-	p.Close()
+	defer p.Close()
+	defer close(ch)
 }
 
 // consume from kafka then signal the workflow to continue
-func ConsumeAndProduce[T any, K any](topicIn string, topicOut string, req T, res K) {
+func Consume(topic string, req shared.SaferRequest) {
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": fmt.Sprintf("%s:%s",
@@ -87,24 +71,21 @@ func ConsumeAndProduce[T any, K any](topicIn string, topicOut string, req T, res
 		"auto.offset.reset": "earliest",
 	})
 
+	log.Printf("💡Consume from topic: %s\n", topic)
 	if err != nil {
 		panic(err)
 	}
 
-	c.SubscribeTopics([]string{topicIn}, nil)
+	c.SubscribeTopics([]string{topic}, nil)
 
 	for {
 		msg, err := c.ReadMessage(-1)
+
 		if err == nil {
-			err := json.Unmarshal([]byte(string(msg.Value)), &req)
-			if err != nil {
-				log.Println(err)
-				return
-			}
+			log.Println("📩 Received from kafka", string(msg.Value))
+			res, _ := update(string(msg.Value))
 
-			res, err = update(req)
-
-			Produce(topicOut, res)
+			ch <- res
 		} else {
 			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
 			break
@@ -114,8 +95,22 @@ func ConsumeAndProduce[T any, K any](topicIn string, topicOut string, req T, res
 	c.Close()
 }
 
+func Handler() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		Consume(shared.GetConfig().Limit.Kafka.Topic.In, shared.SaferRequest{})
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		Produce(shared.GetConfig().Limit.Kafka.Topic.Out)
+	}()
+	wg.Wait()
+}
+
 func main() {
-	var req model.SaferRequest
-	var res model.SaferResponse
-	ConsumeAndProduce(shared.GetConfig().Limit.Kafka.Topic.In, req, res)
+	Handler()
 }

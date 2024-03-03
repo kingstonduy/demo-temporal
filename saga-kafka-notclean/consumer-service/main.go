@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	shared "saga-kafka-notclean/config"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -32,7 +33,7 @@ func main() {
 		panic(err)
 	}
 	topics := []string{
-		shared.GetConfig().MoneyTransfer.Kafka.Topic.Out,
+		shared.GetConfig().T24.Kafka.Topic.Out,
 		shared.GetConfig().Limit.Kafka.Topic.Out,
 		shared.GetConfig().Napas.Kafka.Topic.Out,
 	}
@@ -47,8 +48,11 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+			log.Printf("💡Consume message = %+v", message)
+			log.Printf("💡Signal to temporal workflowID = %s, workflowRunID = %s, signal = %s, message = %+v",
+				message.WorkflowID, message.RunID, message.Action, message)
 
-			temporalClient.SignalWorkflow(context.Background(), message.WorkflowID, message.RunID, message.SignalName, message)
+			temporalClient.SignalWorkflow(context.Background(), message.WorkflowID, message.RunID, message.Action, message)
 		} else {
 			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
 			break

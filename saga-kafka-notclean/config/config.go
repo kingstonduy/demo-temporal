@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -55,7 +56,7 @@ type Config struct {
 				Out string `mapstructure:"out"`
 			} `mapstructure:"topic"`
 		} `mapstructure:"kafka"`
-	} `mapstructure:"t24"`
+	} `mapstructure:"napas"`
 	Database struct {
 		Postgres struct {
 			Host     string `mapstructure:"host"`
@@ -67,7 +68,7 @@ type Config struct {
 	} `mapstructure:"database"`
 	Temporal struct {
 		Host      string `mapstructure:"host"`
-		Port      int    `mapstructure:"port"`
+		Port      string `mapstructure:"port"`
 		TaskQueue string `mapstructure:"taskqueue"`
 		Workflow  string `mapstructure:"workflow"`
 	} `mapstructure:"temporal"`
@@ -168,4 +169,43 @@ func GetAMQPConnection() *amqp.Connection {
 	}
 
 	return conn
+}
+
+var producer *kafka.Producer
+
+func GetKafkaProducer() *kafka.Producer {
+	if producer == nil {
+		var err error
+		producer, err = kafka.NewProducer(&kafka.ConfigMap{
+			"bootstrap.servers": fmt.Sprintf("%s:%s",
+				GetConfig().Kafka.BootstrapServer.Host,
+				GetConfig().Kafka.BootstrapServer.Port,
+			),
+		})
+		if err != nil {
+			log.Fatalf("Error creating Kafka producer, %s", err)
+		}
+
+	}
+	return producer
+}
+
+var consumer *kafka.Consumer
+
+func GetKafkaConsumer() *kafka.Consumer {
+	if consumer == nil {
+		var err error
+		consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
+			"bootstrap.servers": fmt.Sprintf("%s:%s",
+				GetConfig().Kafka.BootstrapServer.Host,
+				GetConfig().Kafka.BootstrapServer.Port,
+			),
+			"group.id":          "myGroup",
+			"auto.offset.reset": "earliest",
+		})
+		if err != nil {
+			log.Fatalf("Error creating Kafka consumer, %s", err)
+		}
+	}
+	return consumer
 }

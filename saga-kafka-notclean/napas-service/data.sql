@@ -1,3 +1,9 @@
+CREATE TABLE napas (
+    account_id VARCHAR(255) PRIMARY KEY,
+    account_name VARCHAR(255) NOT NULL,
+    amount BIGINT NOT NULL
+);
+
 INSERT INTO napas (account_id, account_name, amount)
 VALUES
 ('TMCP23456', 'Tran Thi B', 0),

@@ -38,6 +38,7 @@ type WorkflowOutput struct {
 type SaferRequest struct {
 	WorkflowID    string `json:"WorkflowID"`
 	RunID         string `json:"RunID"`
+	Action        string `json:"Action"`
 	TransactionID string `json:"TransactionID"`
 	FromAccountID string `json:"FromAccountID"`
 	ToAccountID   string `json:"ToAccountID"`
@@ -47,7 +48,7 @@ type SaferRequest struct {
 type SaferResponse struct {
 	WorkflowID string `json:"WorkflowID"`
 	RunID      string `json:"RunID"`
-	SignalName string `json:"SignalName"`
+	Action     string `json:"SignalName"`
 	Code       int    `json:"Code"`
 	Status     string `json:"Status"`
 	Message    string `json:"Message"`

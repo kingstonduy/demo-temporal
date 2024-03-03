@@ -15,7 +15,7 @@ type SaferResponse struct {
 }
 
 func main() {
-	concurrent := 1000
+	concurrent := 100
 	var wg sync.WaitGroup
 
 	// Specify the body of the POST request

@@ -1,23 +1,29 @@
-package workflow
+package usecase
 
 import (
 	"fmt"
-	model "saga-rabbitmq-notclean/money-transfer-service/shared"
+	"orchestrator-service/domain"
+	"orchestrator-service/pkg/logger"
+	temporal1 "orchestrator-service/usecase/temporal"
 	"time"
 
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (output model.WorkflowOutput, err error) {
+func MoneyTransferWorkflow(
+	ctx workflow.Context,
+	input domain.WorkflowInput,
+	log logger.Logger,
+	compensations temporal1.Compensations,
+	moneyTransferActivities MoneyTransferActivities) (output domain.WorkflowOutput, err error) {
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 5,
 		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 0,
+			MaximumAttempts: 1,
 			InitialInterval: time.Second * 5},
 	}
 	ctx = workflow.WithActivityOptions(ctx, options)
-	var compensations Compensations
 
 	defer func() {
 		if err != nil {
@@ -29,7 +35,7 @@ func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (outp
 
 	fmt.Printf("💡Workflow input %+v\n", input)
 
-	saferRequest := model.SaferRequest{
+	saferRequest := domain.SaferRequest{
 		WorkflowID:    workflow.GetInfo(ctx).WorkflowExecution.ID,
 		RunID:         workflow.GetInfo(ctx).WorkflowExecution.RunID,
 		TransactionID: input.TransactionID,
@@ -38,13 +44,13 @@ func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (outp
 		Amount:        input.Amount,
 	}
 
-	var napasAccountRes model.NapasAccountResponse
-	err = workflow.ExecuteActivity(ctx, ValidateAccount, saferRequest).Get(ctx, &napasAccountRes)
+	var napasAccountRes domain.NapasAccountResponse
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.ValidateAccount, saferRequest).Get(ctx, &napasAccountRes)
 	if err != nil {
 		return output, err
 	}
 
-	var transactionEntity = model.TransactionEntity{
+	var transactionEntity = domain.TransactionEntity{
 		TransactionID: input.TransactionID,
 		FromAccountID: input.FromAccountID,
 		ToAccountID:   input.ToAccountID,
@@ -55,7 +61,7 @@ func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (outp
 		State:         "",
 	}
 
-	output = model.WorkflowOutput{
+	output = domain.WorkflowOutput{
 		TransactionID: input.TransactionID,
 		FromAccountID: input.FromAccountID,
 		ToAccountID:   input.ToAccountID,
@@ -67,39 +73,39 @@ func MoneyTransferService(ctx workflow.Context, input model.WorkflowInput) (outp
 
 	fmt.Printf("💡Output: %+v\n", output)
 
-	err = workflow.ExecuteActivity(ctx, UpdateStateCreated, transactionEntity).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.UpdateStateCreated, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
-	compensations.AddCompensation(CompensateTransaction, transactionEntity)
+	compensations.AddCompensation(moneyTransferActivities.CompensateTransaction, transactionEntity)
 
-	err = workflow.ExecuteActivity(ctx, LimitCut, saferRequest).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.LimitCut, saferRequest).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
-	compensations.AddCompensation(LimitCutCompensate, saferRequest)
-	err = workflow.ExecuteActivity(ctx, UpdateStateLimitCut, transactionEntity).Get(ctx, nil)
-	if err != nil {
-		return output, err
-	}
-
-	err = workflow.ExecuteActivity(ctx, MoneyCut, saferRequest).Get(ctx, nil)
-	if err != nil {
-		return output, err
-	}
-	compensations.AddCompensation(MoneyCutCompensate, saferRequest)
-	err = workflow.ExecuteActivity(ctx, UpdateStateMoneyCut, transactionEntity).Get(ctx, nil)
+	compensations.AddCompensation(moneyTransferActivities.LimitCutCompensate, saferRequest)
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.UpdateStateLimitCut, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
 
-	err = workflow.ExecuteActivity(ctx, UpdateMoney, saferRequest).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.MoneyCut, saferRequest).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}
-	compensations.AddCompensation(UpdateMoneyCompensate, saferRequest)
+	compensations.AddCompensation(moneyTransferActivities.MoneyCutCompensate, saferRequest)
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.UpdateStateMoneyCut, transactionEntity).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
 
-	err = workflow.ExecuteActivity(ctx, UpdateStateTransactionCompleted, transactionEntity).Get(ctx, nil)
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.UpdateMoney, saferRequest).Get(ctx, nil)
+	if err != nil {
+		return output, err
+	}
+	compensations.AddCompensation(moneyTransferActivities.UpdateMoneyCompensate, saferRequest)
+
+	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.UpdateStateTransactionCompleted, transactionEntity).Get(ctx, nil)
 	if err != nil {
 		return output, err
 	}

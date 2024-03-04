@@ -3,19 +3,67 @@ package bootstrap
 import (
 	"fmt"
 	"log"
+	"time"
 
-	"github.com/lengocson131002/go-clean/pkg/env"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/viper"
 	"go.temporal.io/sdk/client"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func GetConfigure() env.Configure {
-	var file env.ConfigFile = "../.env"
-	return env.NewViperConfig(&file)
+type Config struct {
+	MoneyTransfer struct {
+		Host  string `mapstructure:"host"`
+		Port  string `mapstructure:"port"`
+		Queue string `mapstructure:"queue"`
+	} `mapstructure:"money-transfer"`
+	Limit struct {
+		Host  string `mapstructure:"host"`
+		Port  string `mapstructure:"port"`
+		Queue string `mapstructure:"queue"`
+	} `mapstructure:"limit"`
+	T24 struct {
+		Host  string `mapstructure:"host"`
+		Port  string `mapstructure:"port"`
+		Queue string `mapstructure:"queue"`
+	} `mapstructure:"t24"`
+	NapasMoney struct {
+		Host  string `mapstructure:"host"`
+		Port  string `mapstructure:"port"`
+		Queue string `mapstructure:"queue"`
+	} `mapstructure:"napas-money"`
+	NapasAccount struct {
+		Host  string `mapstructure:"host"`
+		Port  string `mapstructure:"port"`
+		Queue string `mapstructure:"queue"`
+	} `mapstructure:"napas-account"`
+	Database struct {
+		Postgres struct {
+			Host     string `mapstructure:"host"`
+			Port     string `mapstructure:"port"`
+			DBName   string `mapstructure:"dbname"`
+			User     string `mapstructure:"user"`
+			Password string `mapstructure:"password"`
+		} `mapstructure:"postgres"`
+	} `mapstructure:"database"`
+	Temporal struct {
+		Host      string `mapstructure:"host"`
+		Port      string `mapstructure:"port"`
+		TaskQueue string `mapstructure:"taskqueue"`
+		Workflow  string `mapstructure:"workflow"`
+	} `mapstructure:"temporal"`
+	RabbitMQ struct {
+		Host     string `mapstructure:"host"`
+		Port     string `mapstructure:"port"`
+		User     string `mapstructure:"user"`
+		Password string `mapstructure:"password"`
+	} `mapstructure:"rabbitmq"`
 }
 
+var config *Config = nil
+
 func GetConfig() *Config {
-	var config *Config
 	var cfg *viper.Viper
 	if cfg == nil {
 		cfg = viper.New()
@@ -30,117 +78,86 @@ func GetConfig() *Config {
 
 	err := cfg.Unmarshal(&config)
 	if err != nil {
-		log.Fatalf("unable to decode string struct, %v", err)
+		log.Fatalf("unable to decode stringo struct, %v", err)
 	}
 
 	return config
 }
 
-func GetTemporalClient(cfg env.Configure) *client.Client {
-	c, err := client.Dial(client.Options{
+var dbConn *gorm.DB = nil
+
+func GetDB() (db *gorm.DB, err error) {
+	if dbConn != nil {
+		return dbConn, nil
+	}
+
+	fmt.Println("💡💡💡 Create connection")
+	url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		GetConfig().Database.Postgres.Host,
+		GetConfig().Database.Postgres.Port,
+		GetConfig().Database.Postgres.User,
+		GetConfig().Database.Postgres.DBName,
+		GetConfig().Database.Postgres.Password,
+	)
+
+	dbConn, err = gorm.Open(postgres.Open(url), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Error connecting to database, %s", err)
+		return nil, err
+	}
+
+	sqlDB, err := dbConn.DB()
+	if err != nil {
+		log.Fatalf("Error getting underlying sql.DB, %s", err)
+		return nil, err
+	}
+
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(50)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(100)
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(time.Minute * 5)
+
+	return dbConn, nil
+}
+
+var conn *amqp.Connection = nil
+
+func GetAMQPConnection() *amqp.Connection {
+	if conn != nil {
+		return conn
+	}
+
+	url := fmt.Sprintf("amqp://%s:%s@%s:%s/",
+		GetConfig().RabbitMQ.User,
+		GetConfig().RabbitMQ.Password,
+		GetConfig().RabbitMQ.Host,
+		GetConfig().RabbitMQ.Port,
+	)
+
+	var err error
+	conn, err = amqp.Dial(url)
+	if err != nil {
+		log.Fatalf("Error connecting to RabbitMQ, %s", err)
+	}
+
+	return conn
+}
+
+var temporalClient *client.Client = nil
+
+func GetTemporalClient() *client.Client {
+	if temporalClient != nil {
+		return temporalClient
+	}
+	temporalClient, err := client.Dial(client.Options{
 		HostPort: fmt.Sprintf("%s:%s", GetConfig().Temporal.Host, GetConfig().Temporal.Port),
 	})
 	if err != nil {
 		log.Fatalf("unable to create client, %v", err)
 	}
 
-	return &c
-}
-
-func GetDatabaseConfig(cfg env.Configure) *PostgresConfig {
-	username := cfg.GetString("DB_USERNAME")
-	password := cfg.GetString("DB_PASSWORD")
-	host := cfg.GetString("DB_HOST")
-	port := cfg.GetInt("DB_PORT")
-	sslmode := cfg.GetString("DB_SSL_MODE")
-	database := cfg.GetString("DB_NAME")
-	idleConnection := cfg.GetInt("DB_POOL_IDLE_CONNECTION")
-	maxConnection := cfg.GetInt("DB_POOL_MAX_CONNECTION")
-	maxLifeTimeConnection := cfg.GetInt("DB_POOL_MAX_LIFE_TIME")
-	maxLifeIdleConnection := cfg.GetInt("DB_POOL_MAX_IDLE_TIME")
-
-	return &PostgresConfig{
-		Username:              username,
-		Password:              password,
-		Host:                  host,
-		Port:                  port,
-		Database:              database,
-		SslMode:               sslmode,
-		IdleConnection:        idleConnection,
-		MaxConnection:         maxConnection,
-		MaxLifeTimeConnection: maxLifeTimeConnection,
-		MaxIdleTimeConnection: maxLifeIdleConnection,
-	}
-}
-
-func GetServerConfig(cfg env.Configure) *ServerConfig {
-	name := cfg.GetString("APP_NAME")
-	version := cfg.GetString("APP_VERSION")
-	httpPort := cfg.GetInt("APP_HTTP_PORT")
-	grpcPort := cfg.GetInt("APP_GRPC_PORT")
-	baseUrl := cfg.GetString("APP_BASE_URL")
-	grRunningThreshold := cfg.GetInt("APP_GR_RUNNING_THRESHOLD")
-	gcMaxPauseThresholdms := cfg.GetInt("APP_GC_PAUSE_THRESHOLD_MS")
-
-	return &ServerConfig{
-		Name:               name,
-		AppVersion:         version,
-		HttpPort:           httpPort,
-		GrpcPort:           grpcPort,
-		BaseURI:            baseUrl,
-		GrRunningThreshold: grRunningThreshold,
-		GcPauseThresholdMs: gcMaxPauseThresholdms,
-		EnvFilePath:        "./.env",
-	}
-}
-
-func GetTracingConfig(cfg env.Configure) *TraceConfig {
-	serviceName := cfg.GetString("TRACE_SERVICE_NAME")
-	endpoint := cfg.GetString("TRACE_ENDPOINT")
-
-	return &TraceConfig{
-		ServiceName: serviceName,
-		Endpoint:    endpoint,
-	}
-}
-
-func GetYugabyteConfig(cfg env.Configure) *YugabyteConfig {
-	username := cfg.GetString("DB_YUGABYTE_USER")
-	password := cfg.GetString("DB_YUGABYTE_PASSWORD")
-	host := cfg.GetString("DB_YUGABYTE_HOST")
-	port := cfg.GetInt("DB_YUGABYTE_PORT")
-	sslmode := "disable"
-	database := cfg.GetString("DB_YUGABYTE_DBNAME")
-	idleConnection := cfg.GetInt("DB_YUGABYTE_POOL_IDLE_CONNECTION")
-	maxConnection := cfg.GetInt("DB_YUGABYTE_MAX_POOL_SIZE")
-	maxLifeTimeConnection := cfg.GetInt("DB_YUGABYTE_MAX_LIFE_TIME")
-	maxLifeIdleConnection := cfg.GetInt("DB_YUGABYTE_IDLE_TIMEOUT")
-
-	return &YugabyteConfig{
-		Username:              username,
-		Password:              password,
-		Host:                  host,
-		Port:                  port,
-		Database:              database,
-		SslMode:               sslmode,
-		IdleConnection:        idleConnection,
-		MaxConnection:         maxConnection,
-		MaxLifeTimeConnection: maxLifeTimeConnection,
-		MaxIdleTimeConnection: maxLifeIdleConnection,
-	}
-}
-
-func GetT24MqConfig(cfg env.Configure) *T24Config {
-	return &T24Config{
-		Username:   cfg.GetString("T24_USERNAME"),
-		MqHost:     cfg.GetString("T24_MQ_HOST"),
-		MqPort:     cfg.GetInt("T24_MQ_PORT"),
-		MqChannel:  cfg.GetString("T24_MQ_CHANNEL"),
-		MqManager:  cfg.GetString("T24_MQ_MANAGER"),
-		MqNameIn:   cfg.GetString("T24_MQ_NAME_IN"),
-		MqNameOut:  cfg.GetString("T24_MQ_NAME_OUT"),
-		MqTimeout:  cfg.GetInt("T24_MQ_TIMEOUT_MS"),
-		MqUsername: cfg.GetString("T24_MQ_USERNAME"),
-		MqPassword: cfg.GetString("T24_MQ_PASSWORD"),
-	}
+	return &temporalClient
 }

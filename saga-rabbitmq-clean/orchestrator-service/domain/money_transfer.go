@@ -2,23 +2,6 @@ package domain
 
 import "context"
 
-type CLientRequest struct {
-	FromAccountID string `json:"FromAccountID"`
-	ToAccountID   string `json:"ToAccountID"`
-	Amount        int64  `json:"Amount"`
-}
-
-type ClientResponse struct {
-	TransactionID string `json:"TransactionID"`
-	FromAccountID string `json:"FromAccountID"`
-	// FromAccountName string `json:"FromAccountName"`
-	ToAccountID   string `json:"ToAccountID"`
-	ToAccountName string `json:"ToAccountName"`
-	Message       string `json:"Message"`
-	Amount        int64  `json:"Amount"`
-	Timestamp     string `json:"Timestamp"`
-}
-
 type WorkflowInput struct {
 	TransactionID string
 	FromAccountID string
@@ -76,5 +59,25 @@ func (*TransactionEntity) TableName() string {
 }
 
 type MoneyTransferHandler interface {
-	Handle(ctx context.Context, req *WorkflowInput) (*WorkflowOutput, error)
+	Handle(ctx context.Context, request *WorkflowInput) (*WorkflowOutput, error)
+}
+
+type MoneyTransferRepository interface {
+	Save(entity TransactionEntity) error
+	Create(entity TransactionEntity) error
+}
+
+type MoneyTransferActivities interface {
+	ValidateAccount(ctx context.Context, input SaferRequest) (output NapasAccountResponse, err error)
+	LimitCut(ctx context.Context, input SaferRequest) error
+	LimitCutCompensate(ctx context.Context, input SaferRequest) error
+	MoneyCut(ctx context.Context, input SaferRequest) error
+	MoneyCutCompensate(ctx context.Context, input SaferRequest) error
+	UpdateMoney(ctx context.Context, input SaferRequest) error
+	UpdateMoneyCompensate(ctx context.Context, input SaferRequest) error
+	UpdateStateCreated(ctx context.Context, input TransactionEntity) error
+	UpdateStateLimitCut(ctx context.Context, input TransactionEntity) error
+	UpdateStateMoneyCut(ctx context.Context, input TransactionEntity) error
+	UpdateStateTransactionCompleted(ctx context.Context, input TransactionEntity) error
+	CompensateTransaction(ctx context.Context, input TransactionEntity) error
 }

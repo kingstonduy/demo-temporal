@@ -1030,10 +1030,6 @@ github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
-github.com/ibm-messaging/mq-golang-jms20 v1.10.0 h1:o4St8R12iCWjP3qWY06nd1xsXOd6stwoKOoPtTvH2fE=
-github.com/ibm-messaging/mq-golang-jms20 v1.10.0/go.mod h1:WAzws+c+sN0Yc8fyi25UJG/45vR2ZX4qOo9z0voXAZo=
-github.com/ibm-messaging/mq-golang/v5 v5.3.2 h1:PFbOddNpgy9/whl+mH77kO61zyEeNcm4SYs2bk58Kq8=
-github.com/ibm-messaging/mq-golang/v5 v5.3.2/go.mod h1:NELV8CYOIIH1QmY6pPvulRKjwuih9YAIL9rg8+UNzNw=
 github.com/jmoiron/sqlx v1.3.5 h1:vFFPA71p1o5gAeqtEAwLU4dnX2napprKtHr7PYIcN3g=
 github.com/jmoiron/sqlx v1.3.5/go.mod h1:nRVWtLre0KfCLJvgxzCsLVMogSvQ1zNJtpYr2Ccp0mQ=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
@@ -1196,8 +1192,6 @@ github.com/valyala/fasthttp v1.52.0 h1:wqBQpxH71XW0e2g+Og4dzQM8pk34aFYlA1Ga8db7g
 github.com/valyala/fasthttp v1.52.0/go.mod h1:hf5C4QnVMkNXMspnsUlfM3WitlgYflyhHYoKol/szxQ=
 github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVSA8=
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
-github.com/wamuir/go-xslt v0.1.5 h1:FmO1SD7PpoJtHOfnXcb6R/+NANYHX8+mz0UogNJuPnk=
-github.com/wamuir/go-xslt v0.1.5/go.mod h1:4TQnJGYG4FeeVIgAnV4tyr5pyZQOpxfEZv6Uby/qikU=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

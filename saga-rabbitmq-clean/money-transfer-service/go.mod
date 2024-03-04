@@ -19,7 +19,6 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/swag v1.16.2
 	github.com/valyala/fasthttp v1.52.0
-	github.com/wamuir/go-xslt v0.1.5
 	go.opentelemetry.io/otel v1.23.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.23.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.23.1
@@ -32,8 +31,6 @@ require (
 	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
 )
-
-require github.com/wamuir/go-xslt v0.1.5
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -63,7 +60,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/ibm-messaging/mq-golang/v5 v5.3.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.6 // indirect
 	github.com/leodido/go-urn v1.3.0 // indirect

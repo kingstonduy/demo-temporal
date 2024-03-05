@@ -1,0 +1,61 @@
+money-transfer:
+  host: localhost
+  port: 7201
+  queue: money-transfer-queue
+  kafka:
+    topic:
+      in: money-transfer-topic-in
+      out: money-transfer-topic-out
+
+
+limit:
+  host: localhost
+  port: 7202
+  queue: limit-queue
+  kafka:
+    topic:
+      in: limit-topic-in
+      out: limit-topic-out
+
+t24:
+  host: localhost
+  port: 7203
+  queue: t24-queue
+  kafka:
+    topic:
+      in: t24-topic-in
+      out: t24-topic-out
+
+napas:
+  host: localhost
+  port: 7204
+  queue: napas-queue
+  kafka:
+    topic:
+      in: napas-topic-in
+      out: napas-topic-out
+
+database:
+  postgres:
+    host: localhost
+    port: 5432
+    dbname: postgres
+    user: postgres
+    password: changeme
+
+temporal:
+  host: localhost
+  port: 7233
+  taskqueue: money-transfer-service-task-queue
+  workflow: MoneyTransferWorkflow
+  
+rabbitmq:
+  host: localhost
+  port: 5673
+  user: guest
+  password: guest
+
+kafka:
+  bootstrap-server:
+    host: localhost
+    port: 9092

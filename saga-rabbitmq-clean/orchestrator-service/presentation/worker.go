@@ -8,12 +8,23 @@ import (
 	"sync"
 
 	"github.com/pborman/uuid"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 )
 
-func MoneytransferWorker(activities domain.MoneyTransferActivities, c *client.Client) {
+type moneyTransferWorker struct {
+	activities domain.MoneyTransferActivities
+	cfg        *bootstrap.Config
+}
+
+func NewMoneyTransferWorker(activities domain.MoneyTransferActivities, cfg *bootstrap.Config) moneyTransferWorker {
+	return moneyTransferWorker{
+		activities: activities,
+		cfg:        cfg,
+	}
+}
+
+func (mw *moneyTransferWorker) Run() {
 	// Create the client object just once per process
 
 	workers := 1
@@ -25,9 +36,7 @@ func MoneytransferWorker(activities domain.MoneyTransferActivities, c *client.Cl
 		go func() {
 			defer wg.Done()
 			// This worker hosts both Workflow and Activity functions
-			w := worker.New((*c), bootstrap.GetConfig().Temporal.TaskQueue, worker.Options{
-				// MaxConcurrentWorkflowTaskPollers: 1,
-				// MaxConcurrentActivityTaskPollers: 1,
+			w := worker.New(*bootstrap.GetTemporalClient(mw.cfg), mw.cfg.Temporal.TaskQueue, worker.Options{
 				Identity: uuid.New(),
 			})
 
@@ -35,25 +44,18 @@ func MoneytransferWorker(activities domain.MoneyTransferActivities, c *client.Cl
 				Name: "MoneyTransferService",
 			})
 
-			w.RegisterActivity(activities.ValidateAccount)
-
-			w.RegisterActivity(activities.CompensateTransaction)
-			w.RegisterActivity(activities.UpdateStateCreated)
-
-			w.RegisterActivity(activities.LimitCut)
-			w.RegisterActivity(activities.LimitCutCompensate)
-
-			w.RegisterActivity(activities.UpdateStateLimitCut)
-
-			w.RegisterActivity(activities.MoneyCut)
-			w.RegisterActivity(activities.MoneyCutCompensate)
-
-			w.RegisterActivity(activities.UpdateStateMoneyCut)
-
-			w.RegisterActivity(activities.UpdateMoney)
-			w.RegisterActivity(activities.UpdateMoneyCompensate)
-
-			w.RegisterActivity(activities.UpdateStateTransactionCompleted)
+			w.RegisterActivity(mw.activities.ValidateAccount)
+			w.RegisterActivity(mw.activities.CompensateTransaction)
+			w.RegisterActivity(mw.activities.UpdateStateCreated)
+			w.RegisterActivity(mw.activities.LimitCut)
+			w.RegisterActivity(mw.activities.LimitCutCompensate)
+			w.RegisterActivity(mw.activities.UpdateStateLimitCut)
+			w.RegisterActivity(mw.activities.MoneyCut)
+			w.RegisterActivity(mw.activities.MoneyCutCompensate)
+			w.RegisterActivity(mw.activities.UpdateStateMoneyCut)
+			w.RegisterActivity(mw.activities.UpdateMoney)
+			w.RegisterActivity(mw.activities.UpdateMoneyCompensate)
+			w.RegisterActivity(mw.activities.UpdateStateTransactionCompleted)
 
 			// Start listening to the Task Queue
 			err := w.Run(worker.InterruptCh())

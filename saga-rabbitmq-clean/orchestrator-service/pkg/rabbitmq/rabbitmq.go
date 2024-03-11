@@ -1,8 +1,7 @@
-package rabbitmq
+package pkg
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"orchestrator-service/bootstrap"
 	"time"
@@ -12,13 +11,13 @@ import (
 	"go.temporal.io/sdk/temporal"
 )
 
-func RequestAndReply[T any, K any](req T, res *K, topic string) error {
-	conn := bootstrap.GetAMQPConnection()
+func RequestAndReply(req string, topic string, cfg *bootstrap.Config) (res string, err error) {
+	conn := bootstrap.GetAMQPConnection(cfg)
 
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Panicf("%s: Failed to open a channel", err)
-		return err
+		return "", err
 	}
 	defer ch.Close()
 
@@ -45,7 +44,7 @@ func RequestAndReply[T any, K any](req T, res *K, topic string) error {
 	)
 	if err != nil {
 		log.Panicf("%s: Failed to register a consumer", err)
-		return err
+		return "", err
 	}
 
 	corrId := uuid.New()
@@ -53,10 +52,9 @@ func RequestAndReply[T any, K any](req T, res *K, topic string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	inputString, err := json.Marshal(req)
 	if err != nil {
 		log.Panicf("Failed to convert object to JSON: %s", err)
-		return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
+		return "", temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
 	}
 
 	err = ch.PublishWithContext(ctx,
@@ -68,24 +66,23 @@ func RequestAndReply[T any, K any](req T, res *K, topic string) error {
 			ContentType:   "text/plain",
 			CorrelationId: corrId,
 			ReplyTo:       q.Name,
-			Body:          []byte(inputString),
+			Body:          []byte(req),
 		})
 	if err != nil {
 		log.Panicf("%s: Failed to publish a message", err)
-		return err
-	}
-
-	for d := range msgs {
-		if corrId == d.CorrelationId {
-			err = json.Unmarshal(d.Body, res)
-			if err != nil {
-				log.Panicf("%s: Failed to convert json to  object", err)
-				return temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
-			}
-			break
-		}
+		return "", err
 	}
 	defer ch.Close()
 
-	return nil
+	for d := range msgs {
+		if corrId == d.CorrelationId {
+			if err != nil {
+				log.Panicf("%s: Failed to convert json to  object", err)
+				return "", temporal.NewNonRetryableApplicationError("non retry", "0", err, nil)
+			}
+			res = string(d.Body)
+			break
+		}
+	}
+	return res, nil
 }

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"orchestrator-service/bootstrap"
 	"orchestrator-service/domain"
 
 	"go.temporal.io/sdk/temporal"
@@ -11,9 +12,9 @@ type MoneytransferRepository struct {
 	DB *gorm.DB
 }
 
-func NewMoneytransferRepository(db *gorm.DB) domain.MoneyTransferRepository {
+func NewMoneytransferRepository(cfg *bootstrap.Config) domain.MoneyTransferRepository {
 	return &MoneytransferRepository{
-		DB: db,
+		DB: bootstrap.GetDB(cfg),
 	}
 }
 

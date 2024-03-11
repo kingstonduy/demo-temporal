@@ -1,7 +1,7 @@
 package bootstrap
 
-import "orchestrator-service/pkg/logger"
+import pkg "orchestrator-service/pkg/logger"
 
-func GetLogger() logger.Logger {
-	return logger.NewLogrus()
+func GetLogger() pkg.Logger {
+	return pkg.NewLogrus()
 }

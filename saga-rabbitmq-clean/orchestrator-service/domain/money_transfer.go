@@ -21,6 +21,11 @@ type WorkflowOutput struct {
 }
 
 type SaferRequest struct {
+	// from service
+	// ts send message
+	// request id
+	// trace id = khoi tao workflow
+	// span id bind each service
 	WorkflowID    string `json:"WorkflowID"`
 	RunID         string `json:"RunID"`
 	TransactionID string `json:"TransactionID"`
@@ -30,6 +35,9 @@ type SaferRequest struct {
 }
 
 type SaferResponse struct {
+	// ts reply
+	// duration
+	// header request = header response
 	WorkflowID string `json:"WorkflowID"`
 	RunID      string `json:"RunID"`
 	Code       int    `json:"Code"`
@@ -58,13 +66,13 @@ func (*TransactionEntity) TableName() string {
 	return "transaction"
 }
 
-type MoneyTransferHandler interface {
-	Handle(ctx context.Context, request *WorkflowInput) (*WorkflowOutput, error)
-}
-
 type MoneyTransferRepository interface {
 	Save(entity TransactionEntity) error
 	Create(entity TransactionEntity) error
+}
+
+type MoneyTransferMessageQueue interface {
+	SaferRequestResponse(input SaferRequest, queue string) (output SaferResponse, err error)
 }
 
 type MoneyTransferActivities interface {

@@ -1,4 +1,4 @@
-package logger
+package pkg
 
 type Logger interface {
 	Trace(message string, args ...interface{})

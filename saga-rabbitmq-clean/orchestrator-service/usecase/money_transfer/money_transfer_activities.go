@@ -7,21 +7,29 @@ import (
 	"math"
 	"orchestrator-service/bootstrap"
 	"orchestrator-service/domain"
-	"orchestrator-service/infra/rabbitmq"
-	"orchestrator-service/pkg/logger"
+	pkg "orchestrator-service/pkg/logger"
 
 	"go.temporal.io/sdk/temporal"
 )
 
 type MoneyTransferActivities struct {
-	log        logger.Logger
+	cfg        *bootstrap.Config
+	log        pkg.Logger
+	mq         domain.MoneyTransferMessageQueue
 	repository domain.MoneyTransferRepository
 }
 
-func NewMoneyTransferActivities(log logger.Logger, repository domain.MoneyTransferRepository) domain.MoneyTransferActivities {
+func NewMoneyTransferActivities(
+	cfg *bootstrap.Config,
+	log pkg.Logger,
+	repository domain.MoneyTransferRepository,
+	messagequeue domain.MoneyTransferMessageQueue,
+) domain.MoneyTransferActivities {
 	return &MoneyTransferActivities{
+		cfg:        cfg,
 		log:        log,
 		repository: repository,
+		mq:         messagequeue,
 	}
 }
 
@@ -30,7 +38,7 @@ func (m *MoneyTransferActivities) ValidateAccount(ctx context.Context, input dom
 	m.log.Info("💡Validate Account activity starts")
 
 	var response domain.SaferResponse
-	err = rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().NapasAccount.Queue)
+	response, err = m.mq.SaferRequestResponse(input, m.cfg.NapasAccount.Queue)
 	if err != nil {
 		return output, err
 	}
@@ -57,7 +65,7 @@ func (m *MoneyTransferActivities) LimitCut(ctx context.Context, input domain.Saf
 
 	input.Amount = -int64(math.Abs(float64(input.Amount)))
 	var response domain.SaferResponse
-	err := rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().Limit.Queue)
+	response, err := m.mq.SaferRequestResponse(input, m.cfg.Limit.Queue)
 	if err != nil {
 		return err
 	}
@@ -75,7 +83,7 @@ func (m *MoneyTransferActivities) LimitCutCompensate(ctx context.Context, input 
 
 	input.Amount = int64(math.Abs(float64(input.Amount)))
 	var response domain.SaferResponse
-	err := rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().Limit.Queue)
+	response, err := m.mq.SaferRequestResponse(input, m.cfg.Limit.Queue)
 	if err != nil {
 		return err
 	}
@@ -92,7 +100,7 @@ func (m *MoneyTransferActivities) MoneyCut(ctx context.Context, input domain.Saf
 
 	input.Amount = -int64(math.Abs(float64(input.Amount)))
 	var response domain.SaferResponse
-	err := rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().T24.Queue)
+	response, err := m.mq.SaferRequestResponse(input, m.cfg.T24.Queue)
 	if err != nil {
 		return err
 	}
@@ -109,7 +117,7 @@ func (m *MoneyTransferActivities) MoneyCutCompensate(ctx context.Context, input 
 
 	input.Amount = int64(math.Abs(float64(input.Amount)))
 	var response domain.SaferResponse
-	err := rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().T24.Queue)
+	response, err := m.mq.SaferRequestResponse(input, m.cfg.T24.Queue)
 	if err != nil {
 		return err
 	}
@@ -126,7 +134,7 @@ func (m *MoneyTransferActivities) UpdateMoney(ctx context.Context, input domain.
 
 	input.Amount = int64(math.Abs(float64(input.Amount)))
 	var response domain.SaferResponse
-	err := rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().NapasMoney.Queue)
+	response, err := m.mq.SaferRequestResponse(input, m.cfg.NapasMoney.Queue)
 	if err != nil {
 		return err
 	}
@@ -143,7 +151,7 @@ func (m *MoneyTransferActivities) UpdateMoneyCompensate(ctx context.Context, inp
 
 	input.Amount = -int64(math.Abs(float64(input.Amount)))
 	var response domain.SaferResponse
-	err := rabbitmq.RequestAndReply(input, &response, bootstrap.GetConfig().NapasMoney.Queue)
+	response, err := m.mq.SaferRequestResponse(input, m.cfg.NapasMoney.Queue)
 	if err != nil {
 		return err
 	}

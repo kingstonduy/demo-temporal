@@ -1,4 +1,4 @@
-package temporal1
+package temporal
 
 import (
 	"log"

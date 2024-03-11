@@ -68,6 +68,7 @@ func ConsumeAndPublish(topic string, conn *amqp.Connection) {
 			for d := range msgs {
 				// convert json string to struct
 				var saferRequest model.SaferRequest
+				fmt.Printf("💡Consume request from topic %s, message: %+v\n", topic, string(d.Body))
 				err := json.Unmarshal(d.Body, &saferRequest)
 				failOnError(err, "Failed to convert body to struct")
 
@@ -92,7 +93,7 @@ func ConsumeAndPublish(topic string, conn *amqp.Connection) {
 
 				// convert struct to json string
 				responseStr, _ := json.Marshal(response)
-				fmt.Printf("💡Reply response from topic %s, message: %+v\n", topic, saferRequest)
+				fmt.Printf("💡Reply response from topic %s, message: %+v\n", topic, response)
 
 				err = ch.PublishWithContext(ctx,
 					"",        // exchange

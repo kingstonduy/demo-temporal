@@ -3,8 +3,7 @@ package usecase
 import (
 	"fmt"
 	"orchestrator-service/domain"
-	"orchestrator-service/pkg/logger"
-	temporal1 "orchestrator-service/usecase/temporal"
+	infra "orchestrator-service/infra/temporal"
 	"time"
 
 	"go.temporal.io/sdk/temporal"
@@ -14,16 +13,19 @@ import (
 func MoneyTransferWorkflow(
 	ctx workflow.Context,
 	input domain.WorkflowInput,
-	log logger.Logger,
-	compensations temporal1.Compensations,
-	moneyTransferActivities MoneyTransferActivities) (output domain.WorkflowOutput, err error) {
+	compensations infra.Compensations,
+	moneyTransferActivities MoneyTransferActivities,
+) (output domain.WorkflowOutput, err error) {
+
 	options := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Second * 5,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
 			InitialInterval: time.Second * 5},
 	}
+
 	ctx = workflow.WithActivityOptions(ctx, options)
+	log := workflow.GetLogger(ctx)
 
 	defer func() {
 		if err != nil {
@@ -33,7 +35,7 @@ func MoneyTransferWorkflow(
 		}
 	}()
 
-	fmt.Printf("💡Workflow input %+v\n", input)
+	log.Info("💡Workflow input %+v\n", input)
 
 	saferRequest := domain.SaferRequest{
 		WorkflowID:    workflow.GetInfo(ctx).WorkflowExecution.ID,
@@ -71,7 +73,7 @@ func MoneyTransferWorkflow(
 		Timestamp:     time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	fmt.Printf("💡Output: %+v\n", output)
+	log.Info("💡Output: %+v\n", output)
 
 	err = workflow.ExecuteActivity(ctx, moneyTransferActivities.UpdateStateCreated, transactionEntity).Get(ctx, nil)
 	if err != nil {

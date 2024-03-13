@@ -2,10 +2,10 @@ package main
 
 import (
 	"orchestrator-service/bootstrap"
-	"orchestrator-service/infra/rabbitmq"
+	"orchestrator-service/infra/message_queue/rabbitmq"
 	"orchestrator-service/infra/repository"
-	"orchestrator-service/presentation"
 	usecase "orchestrator-service/usecase/money_transfer"
+	"orchestrator-service/worker"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 
 	activities := usecase.NewMoneyTransferActivities(cfg, log, moneyTransferRepository, moneyTransferMessageQueue)
 
-	moneyTransferWorker := presentation.NewMoneyTransferWorker(activities, cfg)
+	moneyTransferWorker := worker.NewMoneyTransferWorker(activities, cfg)
 
 	moneyTransferWorker.Run()
 }

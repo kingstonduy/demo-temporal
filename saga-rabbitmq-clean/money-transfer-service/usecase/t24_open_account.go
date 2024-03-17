@@ -9,25 +9,23 @@ import (
 )
 
 type openAccountHandler struct {
-	// masterDataRepository data.MasterDataRepository
-	t24Cfg *bootstrap.T24Config
-	t24mq  outbound.T24MQClient
+	t24Client outbound.T24MQClient
 }
 
 func NewOpenAccountHandler(
-	// mdRepo data.MasterDataRepository,
 	t24Cfg *bootstrap.T24Config,
 	t24mq outbound.T24MQClient,
 
 ) domain.OpenAccountHandler {
 
 	return &openAccountHandler{
-		t24Cfg: t24Cfg,
-		t24mq:  t24mq,
+		t24Client: t24mq,
 	}
 }
 
 func (h *openAccountHandler) Handle(ctx context.Context, req *domain.OpenAccountRequest) (*domain.OpenAccountResponse, error) {
+	//logic
+
 	t24Req := &outbound.T24MQOpenAccountRequest{
 		CIF:             req.CIF,
 		AccountTitle:    req.AccountTitle,
@@ -38,9 +36,9 @@ func (h *openAccountHandler) Handle(ctx context.Context, req *domain.OpenAccount
 		PostingRestrict: req.PostingRestrict,
 		Program:         req.Program,
 		Currency:        req.Currency,
-		T24User:         h.t24Cfg.Username,
 	}
-	t24Res, err := h.t24mq.ExceuteOpenAccount(ctx, t24Req)
+
+	t24Res, err := h.t24Client.ExceuteOpenAccount(ctx, t24Req)
 	if err != nil {
 		return nil, err
 	}
@@ -49,4 +47,5 @@ func (h *openAccountHandler) Handle(ctx context.Context, req *domain.OpenAccount
 		CIF:    t24Res.CIF,
 		Status: t24Res.Status,
 	}, nil
+
 }

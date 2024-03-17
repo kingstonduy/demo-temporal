@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"github.com/lengocson131002/go-clean/bootstrap"
-	"github.com/lengocson131002/go-clean/infras/data"
+	"github.com/lengocson131002/go-clean/infras/outbound"
 	"github.com/lengocson131002/go-clean/pkg/logger"
-	gprc "github.com/lengocson131002/go-clean/presentation/grpc"
+	"github.com/lengocson131002/go-clean/pkg/xslt"
 	"github.com/lengocson131002/go-clean/presentation/http"
 	"github.com/lengocson131002/go-clean/presentation/http/controller"
-	"github.com/lengocson131002/go-clean/presentation/http/middleware"
 	"github.com/lengocson131002/go-clean/usecase"
 	"go.uber.org/fx"
 )
@@ -19,42 +18,33 @@ var Module = fx.Module("main",
 	fx.Provide(bootstrap.GetLogger),
 	fx.Provide(bootstrap.GetConfigure),
 	fx.Provide(bootstrap.GetServerConfig),
-	fx.Provide(bootstrap.GetDatabaseConfig),
-	fx.Provide(bootstrap.GetTracingConfig),
 	fx.Provide(bootstrap.GetValidator),
-	fx.Provide(bootstrap.GetDatabaseConnector),
-	fx.Provide(bootstrap.GetUserDatabase),
+	// fx.Provide(bootstrap.GetDatabaseConnector),
 	fx.Provide(bootstrap.GetTracer),
-	fx.Provide(data.NewUserRepository),
-	fx.Provide(controller.NewUserController),
-	fx.Provide(controller.NewMoneyTransferController),
-	fx.Provide(middleware.NewAuthMiddleware),
-	fx.Provide(bootstrap.NewHealthChecker),
-	fx.Provide(bootstrap.GetConfig),
-	fx.Provide(bootstrap.GetTemporalClient),
 
-	fx.Provide(usecase.NewVerifyUserHandler),
-	fx.Provide(usecase.NewCreateUserHandler),
-	fx.Provide(usecase.NewGetUserHandler),
-	fx.Provide(usecase.NewLogoutUserHandler),
-	fx.Provide(usecase.NewUpdateUserHandler),
-	fx.Provide(usecase.NewLoginUserHandler),
+	fx.Provide(bootstrap.NewHealthChecker),
+
 	fx.Provide(usecase.NewOpenAccountHandler),
-	fx.Provide(usecase.NewMoneyTransferHandler),
 
 	fx.Provide(bootstrap.NewRequestLoggingBehavior),
 	fx.Provide(bootstrap.NewTracingBehavior),
 	fx.Provide(bootstrap.NewMetricBehavior),
 	fx.Provide(bootstrap.NewErrorHandlingBehavior),
 
+	// fx.Provide(bootstrap.GetKafkaBroker),
+
 	fx.Provide(http.NewHttpServer),
-	fx.Provide(gprc.NewGrpcServer),
-	fx.Provide(bootstrap.GetYugabyteConfig),
-	fx.Provide(bootstrap.GetMasterDataDatabase),
-	fx.Provide(data.NewMasterDataRepository),
-	fx.Provide(bootstrap.NewMetricer),
+	// fx.Provide(gprc.NewGrpcServer),
+	// fx.Provide(broker.NewBrokerServer),
+
+	// fx.Provide(bootstrap.GetYugabyteConfig),
+	// fx.Provide(bootstrap.GetMasterDataDatabase),
+	// fx.Provide(data.NewMasterDataRepository),
+	fx.Provide(bootstrap.GetPrometheusMetricer),
 	fx.Provide(bootstrap.GetT24MqConfig),
 	fx.Provide(controller.NewT24AccountController),
+	fx.Provide(xslt.NewDefaultXslt),
+	fx.Provide(outbound.NewT24MqClient),
 	fx.Invoke(bootstrap.RegisterPipeline),
 )
 
@@ -64,9 +54,18 @@ func main() {
 		Module,
 		fx.Invoke(run),
 	).Run()
+
 }
 
-func run(lc fx.Lifecycle, http *http.HttpServer, grpc *gprc.GrpcServer, log logger.Logger, conf *bootstrap.ServerConfig, shutdowner fx.Shutdowner) {
+func run(
+	lc fx.Lifecycle,
+	http *http.HttpServer,
+	// grpc *gprc.GrpcServer,
+	// broker *broker.BrokerServer,
+	log logger.Logger,
+	conf *bootstrap.ServerConfig,
+	shutdowner fx.Shutdowner,
+) {
 	gCtx, cancel := context.WithCancel(context.Background())
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -75,22 +74,32 @@ func run(lc fx.Lifecycle, http *http.HttpServer, grpc *gprc.GrpcServer, log logg
 			// start HTTP server
 			go func() {
 				if err := http.Start(gCtx); err != nil {
-					log.Fatal("Failed to start HTTP server: %s", err)
+					log.Fatal(ctx, "Failed to start HTTP server: %s", err)
 					errChan <- err
 					cancel()
 					shutdowner.Shutdown()
 				}
 			}()
 
-			// start GRPC server
-			go func() {
-				if err := grpc.Start(gCtx); err != nil {
-					log.Fatal("Failed to start GRPC server: %s", err)
-					errChan <- err
-					cancel()
-					shutdowner.Shutdown()
-				}
-			}()
+			// // start GRPC server
+			// go func() {
+			// 	if err := grpc.Start(gCtx); err != nil {
+			// 		log.Fatal(ctx, "Failed to start GRPC server: %s", err)
+			// 		errChan <- err
+			// 		cancel()
+			// 		shutdowner.Shutdown()
+			// 	}
+			// }()
+
+			// // start BROKER server
+			// go func() {
+			// 	if err := broker.Start(gCtx); err != nil {
+			// 		log.Fatalf(ctx, "Failed to start Broker server: %s", err)
+			// 		errChan <- err
+			// 		cancel()
+			// 		shutdowner.Shutdown()
+			// 	}
+			// }()
 
 			select {
 			case err := <-errChan:

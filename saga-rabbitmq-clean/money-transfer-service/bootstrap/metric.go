@@ -1,32 +1,19 @@
 package bootstrap
 
 import (
-	"github.com/lengocson131002/go-clean/pkg/metrics"
-	metric "github.com/lengocson131002/go-clean/pkg/metrics/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
+	"context"
+
+	"github.com/lengocson131002/go-clean/pkg/logger"
+	"github.com/lengocson131002/go-clean/pkg/metrics/prome"
 )
 
-const (
-	METRIC_LABEL_REQUEST_TYPE                 = "request_type"
-	METRIC_LABEL_REQUEST_STATUS               = "status"
-	METRIC_LABEL_VALUE_REQUEST_STATUS_SUCCESS = "success"
-	METRIC_LABEL_VALUE_REQUEST_STATUS_ERROR   = "error"
-)
+func GetPrometheusMetricer(logger logger.Logger) *prome.PrometheusMetricer {
+	metricer, err := prome.NewPrometheusMetricer()
 
-type Metricer struct {
-	requestCountMetrics metrics.Counter
-}
+	if err != nil {
+		logger.Error(context.TODO(), "Failed to create prometheous metricer")
+		panic(err)
+	}
 
-func NewMetricer() (*Metricer, error) {
-	requestCountMetrics := metric.NewCounterFrom(prometheus.CounterOpts{
-		Name: "request_count_total",
-		Help: "Total count of requests",
-	}, []string{
-		METRIC_LABEL_REQUEST_TYPE,
-		METRIC_LABEL_REQUEST_STATUS,
-	})
-
-	return &Metricer{
-		requestCountMetrics: requestCountMetrics,
-	}, nil
+	return metricer
 }

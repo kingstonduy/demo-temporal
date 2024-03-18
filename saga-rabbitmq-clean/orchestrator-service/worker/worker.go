@@ -27,7 +27,7 @@ func NewMoneyTransferWorker(activities domain.MoneyTransferActivities, cfg *boot
 func (mw *moneyTransferWorker) Run() {
 	// Create the client object just once per process
 
-	workers := 1
+	workers := 10
 
 	wg := &sync.WaitGroup{}
 	wg.Add(workers)

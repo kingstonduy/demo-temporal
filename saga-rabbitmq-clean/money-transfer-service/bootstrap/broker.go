@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/lengocson131002/go-clean/pkg/config"
-	"github.com/lengocson131002/go-clean/pkg/logger"
-	"github.com/lengocson131002/go-clean/pkg/transport/broker"
-	"github.com/lengocson131002/go-clean/pkg/transport/broker/kafka"
+	"github.com/lengocson131002/go-clean-core/config"
+	"github.com/lengocson131002/go-clean-core/logger"
+	"github.com/lengocson131002/go-clean-core/transport/broker"
+	"github.com/lengocson131002/go-clean-core/transport/broker/kafka"
 )
 
 func GetKafkaBroker(cfg config.Configure, logger logger.Logger) broker.Broker {
@@ -41,9 +41,18 @@ func GetKafkaBroker(cfg config.Configure, logger logger.Logger) broker.Broker {
 		broker.WithLogger(logger),
 	)
 
+	ctx := context.Background()
+
 	if err != nil {
-		logger.Error(context.TODO(), "Failted to create kafka broker")
+		logger.Error(ctx, "Failted to create kafka broker")
 		panic(err)
+	}
+
+	if err := br.Connect(); err != nil {
+		logger.Error(ctx, "Failted to connect to kafka broker")
+		panic(err)
+	} else {
+		logger.Info(ctx, "Connected to kafka broker")
 	}
 
 	return br

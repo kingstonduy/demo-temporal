@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "github.com/lengocson131002/go-clean/grpc";
+
+service AccountService {
+    rpc CheckBalance(CheckAccountBalanceRequest) returns (CheckAccountBalanceResponse);
+}
+
+message CheckAccountBalanceRequest {
+    string accountNumber = 1;
+}
+
+message CheckAccountBalanceResponse {
+    int64 balance = 1;
+    string currency = 2;
+}

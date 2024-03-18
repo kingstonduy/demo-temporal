@@ -3,8 +3,8 @@ package bootstrap
 import (
 	"context"
 
-	"github.com/lengocson131002/go-clean/pkg/logger"
-	"github.com/lengocson131002/go-clean/pkg/metrics/prome"
+	"github.com/lengocson131002/go-clean-core/logger"
+	"github.com/lengocson131002/go-clean-core/metrics/prome"
 )
 
 func GetPrometheusMetricer(logger logger.Logger) *prome.PrometheusMetricer {

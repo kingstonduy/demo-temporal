@@ -4,32 +4,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"time"
 
-	"github.com/ansrivas/fiberprometheus/v2"
-	"github.com/gofiber/contrib/otelfiber/v2"
 	"github.com/gofiber/fiber/v2"
-	fiberLog "github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/swagger"
-	"github.com/lengocson131002/go-clean/bootstrap"
-	healthchecks "github.com/lengocson131002/go-clean/pkg/health"
-	"github.com/lengocson131002/go-clean/pkg/logger"
-	"github.com/lengocson131002/go-clean/presentation/http/controller"
-	"github.com/lengocson131002/go-clean/presentation/http/handler"
-	"github.com/lengocson131002/go-clean/presentation/http/route"
+	healthchecks "github.com/lengocson131002/go-clean-core/health"
+	"github.com/lengocson131002/go-clean-core/logger"
+	"github.com/lengocson131002/go-clean-core/transport/http"
+	"github.com/ocb/mcs-money-transfer/bootstrap"
+	"github.com/ocb/mcs-money-transfer/presentation/http/controller"
 )
 
 type HttpServer struct {
-	cfg               *bootstrap.ServerConfig
-	logger            logger.Logger
-	healhChecker      healthchecks.HealthChecker
-	t24AccConntroller *controller.T24AccountController
+	Port                    int
+	Name                    string
+	App                     *fiber.App
+	Logger                  logger.Logger
+	HealhChecker            healthchecks.HealthChecker
+	AccountController       *controller.AccountController
+	MoneyTransferController *controller.MoneyTransferController
 }
 
-// @title  CLEAN ARCHITECTURE DEMO
+// @title  GOLANG TEMPORAL DEMO
 // @version 1.0
-// @description CLEAN ARCHITECTURE DEMO
+// @description GOLANG TEMPORAL DEMO
 // @termsOfService http://swagger.io/terms/
 // @contact.name LNS
 // @contact.email leson131002@gmail.com
@@ -40,88 +36,70 @@ func NewHttpServer(
 	cfg *bootstrap.ServerConfig,
 	logger logger.Logger,
 	healhChecker healthchecks.HealthChecker,
-	t24AccConntroller *controller.T24AccountController) *HttpServer {
-	return &HttpServer{
-		cfg:               cfg,
-		logger:            logger,
-		healhChecker:      healhChecker,
-		t24AccConntroller: t24AccConntroller,
-	}
-}
-
-func (s *HttpServer) Start(ctx context.Context) error {
-	// middlewares
-	app := fiber.New(fiber.Config{
-		ErrorHandler: handler.CustomErrorHandler,
+	accountController *controller.AccountController,
+	moneyTransferController *controller.MoneyTransferController,
+) *HttpServer {
+	fiberApp := fiber.New(fiber.Config{
+		ErrorHandler: CustomErrorHandler,
 		JSONDecoder:  json.Unmarshal,
 		JSONEncoder:  json.Marshal,
 	})
 
-	// fiber log
-	app.Use(fiberLog.New(fiberLog.Config{
-		Next:         nil,
-		Done:         nil,
-		Format:       "[${time}] ${status} - ${latency} ${method} ${path}\n",
-		TimeFormat:   "2006-01-02 15:04:05",
-		TimeZone:     "Local",
-		TimeInterval: 500 * time.Millisecond,
-		Output:       os.Stdout,
-	}))
+	return &HttpServer{
+		Port:                    cfg.HttpPort,
+		Name:                    cfg.Name,
+		Logger:                  logger,
+		App:                     fiberApp,
+		HealhChecker:            healhChecker,
+		AccountController:       accountController,
+		MoneyTransferController: moneyTransferController,
+	}
+}
 
-	app.Get("/swagger/*", swagger.HandlerDefault)
+func (s *HttpServer) GetStartOptions() []HttpServerStartOption {
+	return []HttpServerStartOption{
+		WithSwagger(),
+		WithLoggings(),
+		WithHealthCheck(),
+		WithTracing(),
+		WithMetrics(),
+		WithAccountV1Routes(),
+		WithMoneyTransferV1Routes(),
+	}
+}
 
-	// health check endpoint
-	app.Get("/liveliness", func(c *fiber.Ctx) error {
-		result := s.healhChecker.LivenessCheck()
-		if result.Status {
-			return c.Status(fiber.StatusOK).JSON(result)
+func (s *HttpServer) Start(ctx context.Context) error {
+	// configs options
+	opts := s.GetStartOptions()
+	for _, opt := range opts {
+		if err := opt(s); err != nil {
+			return err
 		}
-		return c.Status(fiber.StatusServiceUnavailable).JSON(result)
-	})
-
-	app.Get("/readiness", func(c *fiber.Ctx) error {
-		result := s.healhChecker.RedinessCheck()
-		if result.Status {
-			return c.Status(fiber.StatusOK).JSON(result)
-		}
-		return c.Status(fiber.StatusServiceUnavailable).JSON(result)
-	})
-
-	// tracing
-	app.Use(otelfiber.Middleware())
-
-	// metrics endpoint
-	prometheus := fiberprometheus.New(s.cfg.Name)
-	prometheus.RegisterAt(app, "/metrics")
-	app.Use(prometheus.Middleware)
-
-	api := app.Group("/api")
-	v1 := api.Group("/v1")
-
-	// Register routes
-	route.RegisterT24Route(&v1, s.t24AccConntroller)
+	}
 
 	go func() {
 		defer func(ctx context.Context) {
-			if err := app.Shutdown(); err != nil {
-				s.logger.Errorf(ctx, "Failed to shutdown http server: %v", err)
+			if err := s.App.Shutdown(); err != nil {
+				s.Logger.Errorf(ctx, "Failed to shutdown http server: %v", err)
 			}
-			s.logger.Info(ctx, "Stop HTTP Server")
+			s.Logger.Info(ctx, "Stop HTTP Server")
 		}(ctx)
 
 		<-ctx.Done()
 	}()
 
-	hPort := s.cfg.HttpPort
-	s.logger.Infof(ctx, "Start HTTP server at port: %v", hPort)
-	if err := app.Listen(fmt.Sprintf(":%v", hPort)); err != nil {
-		s.logger.Errorf(ctx, "Failed to start http server: %v ", err)
+	hPort := s.Port
+	s.Logger.Infof(ctx, "Start HTTP server at port: %v", hPort)
+	if err := s.App.Listen(fmt.Sprintf(":%v", hPort)); err != nil {
+		s.Logger.Errorf(ctx, "Failed to start http server: %v ", err)
 		return err
 	}
 
 	return nil
 }
 
-type Router struct {
-	Root *fiber.App
+func CustomErrorHandler(ctx *fiber.Ctx, err error) error {
+	fRes := http.FailureResponse(err)
+	ctx.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	return ctx.Status(fRes.Result.Status).JSON(fRes)
 }

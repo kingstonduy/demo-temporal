@@ -7,15 +7,40 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lengocson131002/go-clean/domain"
-	domainErrors "github.com/lengocson131002/go-clean/pkg/errors"
-	"github.com/lengocson131002/go-clean/pkg/logger"
-	"github.com/lengocson131002/go-clean/pkg/metrics/prome"
-	"github.com/lengocson131002/go-clean/pkg/pipeline"
-	"github.com/lengocson131002/go-clean/pkg/trace"
-	"github.com/lengocson131002/go-clean/pkg/util"
+	domainErrors "github.com/lengocson131002/go-clean-core/errors"
+	"github.com/lengocson131002/go-clean-core/logger"
+	"github.com/lengocson131002/go-clean-core/metrics/prome"
+	"github.com/lengocson131002/go-clean-core/pipeline"
+	"github.com/lengocson131002/go-clean-core/trace"
+	"github.com/lengocson131002/go-clean-core/util"
+	"github.com/ocb/mcs-money-transfer/domain"
+	"github.com/ocb/mcs-money-transfer/domain/account"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+func RegisterPipelineHandlers(
+	checkBalanceHandler account.CheckBalanceHandler,
+	moneyTransferHandler domain.MoneyTransferHandler,
+	// other handers
+) {
+	pipeline.RegisterRequestHandler(checkBalanceHandler)
+	pipeline.RegisterRequestHandler(moneyTransferHandler)
+	// register other handlers
+}
+
+func RegisterPipelineBehaviors(
+	requestLoggingBehavior *RequestLoggingBehavior,
+	requestTracingBehavior *RequestTracingBehavior,
+	requestMetricBehavior *RequestMetricBehavior,
+	errorHandlingBehavior *ErrorHandlingBehavior,
+) {
+	pipeline.RegisterRequestPipelineBehaviors(
+		requestTracingBehavior,
+		requestLoggingBehavior,
+		requestMetricBehavior,
+		errorHandlingBehavior,
+	)
+}
 
 // ERROR HANDLING FOR RECOVERING FROM PANIC
 type ErrorHandlingBehavior struct {
@@ -33,7 +58,7 @@ func (b *ErrorHandlingBehavior) Handle(ctx context.Context, request interface{},
 	defer func() {
 		if r := recover(); r != nil {
 			b.logger.Errorf(ctx, "Recovered from panic: %v", r)
-			err = fmt.Errorf("Internal server error")
+			err = fmt.Errorf("internal server error")
 		}
 	}()
 	response, err := next(ctx)
@@ -149,23 +174,4 @@ func (b *RequestLoggingBehavior) Handle(ctx context.Context, request interface{}
 	response, err = next(ctx)
 
 	return response, err
-}
-
-func RegisterPipeline(
-	// request handlers
-	openAccountHandler domain.OpenAccountHandler,
-
-	// request behaviors
-	requestLoggingBehavior *RequestLoggingBehavior,
-	requestTracingBehavior *RequestTracingBehavior,
-	requestMetricBehavior *RequestMetricBehavior,
-	errorHandlingBehavior *ErrorHandlingBehavior,
-
-) {
-	// Register request handlers
-	pipeline.RegisterRequestHandler[*domain.OpenAccountRequest, *domain.OpenAccountResponse](openAccountHandler)
-
-	// Register request behaviors
-	pipeline.RegisterRequestPipelineBehaviors(requestTracingBehavior, requestLoggingBehavior, requestMetricBehavior, errorHandlingBehavior)
-
 }

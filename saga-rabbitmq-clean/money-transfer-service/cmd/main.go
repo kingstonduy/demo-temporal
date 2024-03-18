@@ -23,6 +23,8 @@ var configModule = fx.Module("config",
 	fx.Provide(bootstrap.NewHealthChecker),
 	fx.Provide(bootstrap.NewElasticSearchClient),
 	fx.Provide(bootstrap.GetPrometheusMetricer),
+	fx.Provide(bootstrap.GetConfig),
+	fx.Provide(bootstrap.GetTemporalClient),
 )
 
 var controllerModule = fx.Module("controller",

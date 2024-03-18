@@ -1,0 +1,44 @@
+money-transfer:
+  host: localhost
+  port: 7201
+  queue: money-transfer-queue
+
+limit:
+  host: localhost
+  port: 7202
+  queue: limit-queue
+
+t24:
+  host: localhost
+  port: 7203
+  queue: t24-queue
+
+napas-money:
+  host: localhost
+  port: 7204
+  queue: napas-money-queue
+
+napas-account:
+  host: localhost
+  port: 7204
+  queue: napas-account-queue
+
+database:
+  postgres:
+    host: localhost
+    port: 5432
+    dbname: postgres
+    user: postgres
+    password: changeme
+
+temporal:
+  host: localhost
+  port: 7233
+  taskqueue: money-transfer-service-task-queue
+  workflow: MoneyTransferService
+  
+rabbitmq:
+  host: localhost
+  port: 5673
+  user: guest
+  password: guest
